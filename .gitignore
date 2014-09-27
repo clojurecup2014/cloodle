@@ -3,6 +3,7 @@
 /lib
 /classes
 /checkouts
+/resources/public/js
 *.jar
 *.class
 /.lein-*

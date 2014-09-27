@@ -2,21 +2,24 @@
   :description "Awesome cloodle application by Pitäjänmäki hackers!"
   :url "http://example.com/FIXME"
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2156"]
+                 [org.clojure/clojurescript "0.0-2322"]
+                 [om "0.7.3"]
                  [compojure "1.1.8"]
                  [ring "1.2.1"]
                  [ring/ring-json "0.3.1"]]
-  :plugins [[lein-cljsbuild "1.0.2"]
+  :plugins [[lein-cljsbuild "1.0.3"]
             [lein-ring "0.8.10"]]
   :hooks [leiningen.cljsbuild]
   :source-paths ["src/clj"]
-  :cljsbuild { 
+  :cljsbuild {
     :builds {
       :main {
         :source-paths ["src/cljs"]
-        :compiler {:output-to "resources/public/js/cljs.js"
+        :compiler {:output-to "resources/public/js/cloodle.js"
+                   :output-dir "resources/public/js"
                    :optimizations :simple
-                   :pretty-print true}
+                   :pretty-print true
+                   :source-map "resources/public/js/cloodle.js.map"}
         :jar true}}}
   :main cloodle.server
   :ring {:handler cloodle.server/app})
