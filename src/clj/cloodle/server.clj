@@ -5,7 +5,8 @@
             [ring.middleware.resource :as resources]
             [ring.middleware.json :as middleware]
             [ring.util.response :as ring]
-            [compojure.route :as route])
+            [compojure.route :as route]
+            [cloodle.mongodao :as dao])
   (:gen-class))
 
 (defn render-app []
@@ -41,4 +42,5 @@
    (middleware/wrap-json-params)))
 
 (defn -main [& args]
+;  (dao/test-stuff)
   (jetty/run-jetty app {:port 3000}))

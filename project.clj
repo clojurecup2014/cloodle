@@ -7,6 +7,7 @@
                  [prismatic/om-tools "0.3.2"]
                  [compojure "1.1.8"]
                  [ring "1.2.1"]
+                 [com.novemberain/monger "2.0.0"]
                  [ring/ring-json "0.3.1"]]
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-ring "0.8.10"]]
