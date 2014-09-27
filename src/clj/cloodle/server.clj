@@ -30,7 +30,6 @@
   (GET "/" [] (ring/redirect "/front.html"))
   (GET "/api" [] (ring/response {:hello "Howdy ho!"}))
   (POST "/api/event" {params :params}
-;        (dao/create-event params)
         (ring/response (dao/create-event params)))
   (route/resources "/")
   (route/not-found "Not found"))
@@ -41,5 +40,6 @@
    (middleware/wrap-json-response)
    (middleware/wrap-json-params)))
 
-(defn -main [& args]
+(defn -main []
+  (cloodle.mongodao/init)
   (jetty/run-jetty app {:port 80}))

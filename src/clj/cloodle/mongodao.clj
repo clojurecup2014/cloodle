@@ -1,8 +1,7 @@
 (ns cloodle.mongodao
   (:require [monger.collection :as mc])
   (:use [monger.core :only [connect get-db disconnect authenticate]])
-  (:use [crypto.random :as crypto])
-  )
+  (:require [crypto.random :as crypto]))
 
 (def key-size 16)
 (def database (atom nil))
@@ -38,3 +37,4 @@
   (let [uri (get-db-uri)
           {:keys [conn db]} (monger.core/connect-via-uri uri)]
     (reset! database db)))
+
