@@ -43,4 +43,4 @@
 
 (defn -main [& args]
 ;  (dao/test-stuff)
-  (jetty/run-jetty app {:port 3000}))
+  (jetty/run-jetty app {:port 80}))

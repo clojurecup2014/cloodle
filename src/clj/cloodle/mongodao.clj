@@ -1,6 +1,9 @@
 (ns cloodle.mongodao
   (:require [monger.collection :as mc])
-  (:use [monger.core :only [connect get-db disconnect authenticate]]))
+  (:use [monger.core :only [connect get-db disconnect authenticate]])
+  (:use [crypto.random :as crypto]))
+
+(defn key-size[] 16)
 
 (defn test-uri []
   (prn "IN TEST MODE!!")
@@ -20,3 +23,11 @@
           {:keys [conn db]} (monger.core/connect-via-uri uri)]
         (mc/insert db "cloodle-events" {:first_name "Jo2hn"  :last_name "Len2non"})
         (mc/insert db "cloodle-events" {:first_name "Rin2go" :last_name "Sta2rr"})))
+
+(defn get-uniq-key[]
+  "Create a uniq key to be used as an identifier for the event."
+  (crypto/url-part 
+    (key-size)))
+
+
+
