@@ -5,7 +5,7 @@
                  [org.clojure/clojurescript "0.0-2322"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [om "0.7.3"]
-                 [prismatic/om-tools "0.3.2"]
+                 [prismatic/om-tools "0.3.2" :exclusions [org.clojure/clojure]]
                  [compojure "1.1.8"]
                  [ring "1.2.1"]
                  [com.novemberain/monger "2.0.0"]
@@ -15,6 +15,7 @@
             [lein-ring "0.8.10"]]
   :hooks [leiningen.cljsbuild]
   :source-paths ["src/clj"]
+  :profiles {:uberjar {:main cloodle.server, :aot :all}}
   :cljsbuild {
     :builds {
       :main {
@@ -25,5 +26,6 @@
                    :pretty-print true
                    :source-map "resources/public/js/cloodle.js.map"}
         :jar true}}}
-  :main cloodle.server
-  :ring {:handler cloodle.server/app :init cloodle.mongodao/init})
+
+  :ring {:handler cloodle.server/app
+         :init cloodle.mongodao/init})
