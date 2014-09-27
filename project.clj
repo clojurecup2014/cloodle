@@ -4,6 +4,7 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2322"]
                  [om "0.7.3"]
+                 [prismatic/om-tools "0.3.2"]
                  [compojure "1.1.8"]
                  [ring "1.2.1"]
                  [com.novemberain/monger "2.0.0"]
