@@ -29,8 +29,12 @@
 (defroutes app-routes
   (GET "/" [] (ring/redirect "/front.html"))
   (GET "/api" [] (ring/response {:hello "Howdy ho!"}))
-  (POST "/api/event" {params :params}
+  (POST "/api/event" {params :params} ;; if params are empty, check that you have Content-Type: application/json. br, Jarkko
+;        (prn params)
         (ring/response (dao/create-event params)))
+  (GET "/api/event/:eventhash" [eventhash] 
+;       (prn " Getting from mongo! " eventhash) 
+       (ring/response (dao/get-by-eventhash eventhash)))
   (route/resources "/")
   (route/not-found "Not found"))
 

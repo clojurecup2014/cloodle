@@ -4,7 +4,8 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2322"]
                  [om "0.7.3"]
-                 [prismatic/om-tools "0.3.2"]
+;                [prismatic/om-tools "0.3.2"]
+                 [prismatic/om-tools "0.3.2" :exclusions [org.clojure/clojure]]
                  [compojure "1.1.8"]
                  [ring "1.2.1"]
                  [com.novemberain/monger "2.0.0"]
@@ -25,7 +26,5 @@
                    :source-map "resources/public/js/cloodle.js.map"}
         :jar true}}}
   :main cloodle.server
-  :ring {
-         :init cloodle.mongodao/init
-         :handler cloodle.server/app
-         })
+  :ring {:handler cloodle.server/app
+         :init cloodle.mongodao/init})
