@@ -1,20 +1,3 @@
-body {
-  width: 900px;
-  margin: 0 auto;
-  background-color: gray;
+.cloodle-name {
+  font-family: 'Permanent Marker', cursive;
 }
-
-div {
-  margin: 3em;
-  padding: 1em;
-  border: 1px solid gray;
-  background-color: lightgray;
-}
-
-.title {
-  width: 200px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
