@@ -26,5 +26,4 @@
                    :source-map "resources/public/js/cloodle.js.map"}
         :jar true}}}
   :main cloodle.server
-  :ring {:handler cloodle.server/app})
-
+  :ring {:handler cloodle.server/app :init cloodle.mongodao/init})
