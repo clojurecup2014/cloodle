@@ -1,8 +1,8 @@
 (ns cloodle.mongodao
-  (:require [monger.collection :as mc])
+  (:require [monger.collection :as mc]
+            [monger.conversion :refer [from-db-object]])
   (:use [monger.core :only [connect get-db disconnect authenticate]])
-  (:use [crypto.random :as crypto])
-  )
+  (:require [crypto.random :as crypto]))
 
 (def key-size 16)
 (def database (atom nil))
@@ -27,10 +27,19 @@
 
 (defn create-event[params]
   "Create a new event and return generated eventhash"
-  (prn params)
   (let [eventhash (get-event-hash) ]
   (mc/insert @database collection (merge {:eventhash eventhash} params))
   eventhash))
+
+(defn strip-mongo-id[event]
+  "Strip mongo object ids from the stuff that comes out of mongo db. It does not serialize to json"
+  (dissoc event :_id))
+
+(defn get-by-eventhash[ehash]
+  "Get event from database by the eventhash"
+  (let [event (mc/find-one-as-map @database collection {:eventhash ehash})]
+;    (prn "found event " event)
+    (strip-mongo-id event)))
 
 (defn init[]
   "Initialize mongodb connection and database!"
@@ -38,3 +47,4 @@
   (let [uri (get-db-uri)
           {:keys [conn db]} (monger.core/connect-via-uri uri)]
     (reset! database db)))
+

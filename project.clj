@@ -15,7 +15,6 @@
             [lein-ring "0.8.10"]]
   :hooks [leiningen.cljsbuild]
   :source-paths ["src/clj"]
-  :profiles {:uberjar {:main cloodle.server, :aot :all}}
   :cljsbuild {
     :builds {
       :main {
@@ -26,6 +25,6 @@
                    :pretty-print true
                    :source-map "resources/public/js/cloodle.js.map"}
         :jar true}}}
-
+  :main cloodle.server
   :ring {:handler cloodle.server/app
          :init cloodle.mongodao/init})
