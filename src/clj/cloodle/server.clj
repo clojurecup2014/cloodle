@@ -26,10 +26,10 @@
       (response/redirect "/help.html")
       (render-app)))
 
-(def app 
+(def app
   (-> handler
     (resources/wrap-resource "public")))
 
 (defn -main [& args]
-  (jetty/run-jetty app {:port 3000}))
+  (jetty/run-jetty app {:port 80}))
 
