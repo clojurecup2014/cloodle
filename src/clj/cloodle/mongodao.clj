@@ -11,9 +11,9 @@
 
 (defn get-db-uri [] 
   (let [mode (java.lang.System/getProperty "MODE")]
-        (if (or (= mode "test") (= mode "TEST")) 
-          (test-uri)
-          (prod-uri))))                                      
+        (if (or (= mode "prod") (= mode "PROD")) 
+          (prod-uri)
+          (test-uri))))                                      
 
 (defn test-stuff[]
   (let [uri (get-db-uri)

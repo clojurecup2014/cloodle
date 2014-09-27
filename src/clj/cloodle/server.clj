@@ -26,15 +26,14 @@
         "</body>"
         "</html>")})
 
-(defroutes app-routes 
-  (GET "/" [] (ring/redirect "/help.html"))
+(defroutes app-routes
+  (GET "/" [] (ring/redirect "/front.html"))
   (GET "/api" [] (ring/response {:hello "Howdy ho!"}))
-  (POST "/api/event" {params :params} 
+  (POST "/api/event" {params :params}
         (println params)
         (ring/response "All good!"))
   (route/resources "/")
   (route/not-found "Not found"))
-
 
 (def app
   (-> (handler/api app-routes)
@@ -44,4 +43,4 @@
 
 (defn -main [& args]
 ;  (dao/test-stuff)
-  (jetty/run-jetty app {:port 80}))
+  (jetty/run-jetty app {:port 3000}))
