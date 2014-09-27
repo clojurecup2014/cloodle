@@ -107,16 +107,17 @@
                         (recur))))
 
                 (go (loop []
-                      (let [save-event (<! save)]
+                      (let [save-event (<! save)
+                            payload (state->save-payload save-event)]
 
-                        (print "Got save event: " (state->save-payload save-event))
+                        (print "Got save event: " payload)
 
-;;                         (go
-;;                          (let [response (<! (http/post "api/event" {:json-params {:foo :bar}}))]
-;;                            (print (:status response))
-;;                            (print (:body response))
+                        (go
+                         (let [response (<! (http/post "api/event" {:json-params payload}))]
+                           (print (:status response))
+                           (print (:body response))
 
-;;                            ))
+                           ))
 
                         (recur))))
 
