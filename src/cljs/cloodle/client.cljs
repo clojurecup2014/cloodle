@@ -18,6 +18,8 @@
               {:name "Junior"}]
     :cloodle-code ""
 
+
+
     }))
 
 
@@ -25,7 +27,43 @@
 (defcomponent option-container [option-data owner]
   (render [this]
 
-          (dom/li nil (:name option-data))))
+          (dom/div #js {:style #js {:margin-bottom "5px"}}
+                   (dom/div #js {:className "pull-left"} (:name option-data))
+                   (dom/div #js {:className "pull-right"}
+                   (dom/button #js {:className "btn btn-danger btn-xs"} (dom/span #js {:className "glyphicon glyphicon-trash"} nil)))
+                   (dom/br #js {:className "clearfix"} nil))
+
+
+  ))
+
+(defn add-option [form-data owner]
+
+  (let [new-option (-> (om/get-node owner "new-option")
+                       .-value)]
+    (when new-option
+      (om/transact! form-data :options #(conj % {:name new-option})))))
+
+(defcomponent new-option-component [form-data owner]
+  (render [this]
+
+          (dom/div #js {:className "form-group"}
+                   (dom/div #js {:className "col-sm-2"} nil)
+                   (dom/div #js {:className "col-sm-2"}
+
+                            (dom/input #js {:id "new-option-name"
+                                            :className "form-control"
+                                            :type "text"
+                                            :ref "new-option"}))
+
+                   (dom/div #js {:className "col-sm-6"}
+                            (dom/button #js {:type "button"
+                                             :className "btn btn-success"
+                                             :onClick #(add-option form-data owner)}
+                                        "Add option")))))
+
+
+
+
 
 
 (defcomponent cloodle-form [form-data owner]
@@ -65,36 +103,28 @@
                                       (dom/label #js {:className "col-sm-2 control-label"}
                                                  "Options")
 
-                                      (dom/div #js {:className "col-sm-6"}
-                                               (apply dom/ul nil (om/build-all option-container (:options form-data))))
+                                      (apply dom/div #js {:className "col-sm-6"}
+                                               (om/build-all option-container (:options form-data))))
 
-;;                                       (dom/button #js {:type "button" :className "col-sm-2 control-label"}
-;;                                                  "Options")
 
-                                      )
+                             (om/build new-option-component form-data)
+
+
 
 
                              (dom/div #js {:className "form-group"}
 
-
-                                      ;;
-                                      ;;             <a href="cloodle.html" type="button" class="btn btn-primary">
-;;                <span class="glyphicon glyphicon-plus"></span> Create a new <span class="cloodle-name">Cloodle</span>
-  ;;          </a>
-
                                       (dom/div #js {:className "col-sm-2"} nil)
                                       (dom/div #js {:className "col-sm-6"}
-                                      (dom/button #js {:type "button" :className "btn btn-success"}
-                                                  (dom/span #js {:className "glyphicon glyphicon-ok"})
-                                                  (dom/span nil " Create!"))
-
-                                      )
+                                               (dom/button #js {:type "button" :className "btn btn-success"}
+                                                           (dom/span #js {:className "glyphicon glyphicon-ok"})
+                                                           (dom/span nil " Create!")))
 
 
 
 
 
-                             )))))
+                                      )))))
 
 
 (om/root cloodle-form form-state
