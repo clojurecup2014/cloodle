@@ -30,8 +30,8 @@
   (GET "/" [] (ring/redirect "/front.html"))
   (GET "/api" [] (ring/response {:hello "Howdy ho!"}))
   (POST "/api/event" {params :params}
-        (println params)
-        (ring/response "All good!"))
+;        (dao/create-event params)
+        (ring/response (dao/create-event params)))
   (route/resources "/")
   (route/not-found "Not found"))
 
@@ -42,5 +42,4 @@
    (middleware/wrap-json-params)))
 
 (defn -main [& args]
-;  (dao/test-stuff)
   (jetty/run-jetty app {:port 80}))
