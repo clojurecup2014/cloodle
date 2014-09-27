@@ -41,4 +41,4 @@
    (middleware/wrap-json-params)))
 
 (defn -main [& args]
-  (jetty/run-jetty app {:port 80}))
+  (jetty/run-jetty app {:port 3000}))
