@@ -1,7 +1,11 @@
 (ns cloodle.client
+
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [om-tools.core :refer-macros [defcomponent]]))
+
+
+;; TODO: CORE ASYNC
 
 (enable-console-print!)
 
@@ -30,7 +34,12 @@
           (dom/div #js {:style #js {:margin-bottom "5px"}}
                    (dom/div #js {:className "pull-left"} (:name option-data))
                    (dom/div #js {:className "pull-right"}
-                   (dom/button #js {:className "btn btn-danger btn-xs"} (dom/span #js {:className "glyphicon glyphicon-trash"} nil)))
+
+                            (dom/button #js {:className "btn btn-danger btn-xs"
+                                              }
+
+                                        (dom/span #js {:className "glyphicon glyphicon-trash"} nil)))
+
                    (dom/br #js {:className "clearfix"} nil))
 
 
