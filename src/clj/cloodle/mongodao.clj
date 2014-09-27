@@ -16,11 +16,11 @@
 ;  (prn "IN PRODUCTION MODE!!")
   "mongodb://prodcloodle:rekVakNeg1132bok12@ds063879.mongolab.com:63879/cloodle")
 
-(defn get-db-uri [] 
+(defn get-db-uri []
   (let [mode (java.lang.System/getProperty "MODE")]
-        (if (or (= mode "prod") (= mode "PROD")) 
+        (if (or (= mode "prod") (= mode "PROD"))
           prod-uri
-          test-uri)))                                      
+          test-uri)))
 
 (defn get-event-hash[]
   "Create a uniq key to be used as an identifier for the event."
@@ -55,7 +55,7 @@
     (strip-mongo-id event)))
 
 (defn init[]
-  "Initialize mongodb connection and database!" 
+  "Initialize mongodb connection and database!"
   (prn "MongoDb init running")
   (let [uri (get-db-uri)
           {:keys [conn db]} (monger.core/connect-via-uri uri)]
