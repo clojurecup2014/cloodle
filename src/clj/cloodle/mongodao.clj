@@ -2,6 +2,7 @@
   (:require [monger.collection :as mc]
             [monger.conversion :refer [from-db-object]])
   (:use [monger.core :only [connect get-db disconnect authenticate]])
+  (:require [validateur.validation :refer :all])
   (:require [crypto.random :as crypto]))
 
 (def key-size 16)
@@ -25,11 +26,23 @@
   "Create a uniq key to be used as an identifier for the event."
   (crypto/url-part key-size))
 
+(defn validate-event[event] 
+  (let [v (validation-set
+     (presence-of :name :message "Must have name") 
+     (presence-of :description :message "Must have description") 
+     (presence-of :options :message "Options must be defined"))]
+     (v event))) 
+
 (defn create-event[params]
   "Create a new event and return generated eventhash"
-  (let [eventhash (get-event-hash) ]
-  (mc/insert @database collection (merge {:eventhash eventhash} params))
-  eventhash))
+  (let [eventhash (get-event-hash)
+        errors (validate-event params)]
+  (if (empty? errors)
+    (let []
+      (prn "no errors!")
+      (mc/insert @database collection (merge {:eventhash eventhash} params))
+      eventhash)
+  errors)))
 
 (defn strip-mongo-id[event]
   "Strip mongo object ids from the stuff that comes out of mongo db. It does not serialize to json"
@@ -47,4 +60,3 @@
   (let [uri (get-db-uri)
           {:keys [conn db]} (monger.core/connect-via-uri uri)]
     (reset! database db)))
-
