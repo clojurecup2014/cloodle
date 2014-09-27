@@ -1,7 +1,11 @@
 (ns cloodle.server
   (:require [ring.adapter.jetty :as jetty]
+            [compojure.core :refer :all]
+            [compojure.handler :as handler]
             [ring.middleware.resource :as resources]
-            [ring.util.response :as response])
+            [ring.middleware.json :as middleware]
+            [ring.util.response :as ring]
+            [compojure.route :as route])
   (:gen-class))
 
 (defn render-app []
@@ -21,15 +25,20 @@
         "</body>"
         "</html>")})
 
-(defn handler [request]
-  (if (= "/" (:uri request))
-      (response/redirect "/front.html")
-      (render-app)))
+(defroutes app-routes
+  (GET "/" [] (ring/redirect "/front.html"))
+  (GET "/api" [] (ring/response {:hello "Howdy ho!"}))
+  (POST "/api/event" {params :params}
+        (println params)
+        (ring/response "All good!"))
+  (route/resources "/")
+  (route/not-found "Not found"))
 
 (def app
-  (-> handler
-    (resources/wrap-resource "public")))
+  (-> (handler/api app-routes)
+   (middleware/wrap-json-body)
+   (middleware/wrap-json-response)
+   (middleware/wrap-json-params)))
 
 (defn -main [& args]
   (jetty/run-jetty app {:port 80}))
-
