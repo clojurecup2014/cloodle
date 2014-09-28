@@ -70,6 +70,14 @@
 
                        ]
 
+
+        :new-participant {
+
+                          :name ""
+                          :selections []
+
+                          }
+
         :saved true})
 
       (atom
@@ -341,15 +349,40 @@
                           (om/build-all participant-component participants)))))
 
 
+(defn get-selection-by-id [selections id]
 
-(defcomponent slider [slider owner]
+  (first (filter #(= (:id %) id) selections)))
+
+(defn handle-slider-change [val selections option owner]
+
+  (print "Option " (:id @option) " to val " val)
+
+  (if-let [selection (get-selection-by-id @selections (:id @option))]
+
+    ;; UPDATE EXISTING SELECTION
+    (om/transact! selections (fn [xs]
+
+                               (let [id (:id @option)
+                                     selection (get-selection-by-id xs id)]
+
+                                 (conj (remove #(= (:id %) id) xs) {:id id :value val}))))
+
+    ;; ADD NEW SELECTION
+    (om/transact! selections (fn [xs] (conj xs {:id (:id @option) :value val})))
+
+    ))
+
+
+(defcomponent slider [{:keys [option selections]} owner]
+
+
 
       (render [_]
               (dom/div #js {:className "slider col-sm-6"} nil))
 
       (did-mount [state]
                  (let [$slider-element ($ (.getDOMNode owner))
-                       parameters #js {:start (:value slider)
+                       parameters #js {:start (:value option)
                                        :range #js {"max" #js [100] "min" #js [0]}
                                        :step 1
                                        :format (js/wNumb #js {:mark "," :decimals 1})
@@ -357,26 +390,78 @@
 
 
                    (.noUiSlider $slider-element parameters)
-                   (.on $slider-element #js {:slide #(handle-slider-change (.val $slider-element) slider owner)}))))
+                   (.on $slider-element #js {:slide #(handle-slider-change (.val $slider-element) selections option owner)}))))
 
 
 
-(defcomponent option-slider [option owner]
-  (render [this]
+(defcomponent option-slider [cursors owner]
+
+
+  (render-state [this state]
 
           (dom/div #js {:className "row" :style #js {:margin-bottom "15px"}}
-            (dom/div #js {:className "col-sm-2"} (:name option))
-            (om/build slider option)
-            )))
+            (dom/div #js {:className "col-sm-2"} (:name (:option cursors)))
+            (om/build slider cursors))
+))
 
 
 
-(defcomponent vote-component [options owner]
-  (render [this]
+(defn handle-participant-name-change [e owner]
+  (om/set-state! owner :participant-name (.. e -target -value)))
+
+(defn initialize-option-votes [options]
+
+
+  (map (fn [option] {:id (:id option) :name (:name option) :value 50}) options)
+
+  )
+
+(defcomponent vote-component [{:keys [new-participant options]} owner]
+
+
+  (render-state [this state]
+
           (dom/div #js {:style #js {:border "solid black 1px"}}
-                   (apply dom/div nil
-                          (om/build-all option-slider options)))))
 
+                   (dom/div #js {:className "row form-group"}
+
+                            (dom/label #js {:htmlFor "participant-name"
+                                            :className "col-sm-2 control-label"}
+                                       "Name")
+
+                            (dom/div #js {:className "col-sm-6"}
+                                     (dom/input #js {:id "name"
+                                                     :className "form-control"
+                                                     :type "text"
+                                                     :value (:name new-participant)
+                                                     :ref "participant-name"
+                                                     :onChange  (fn [e]
+                                                                  (om/transact! new-participant :name (fn [_] (.. e -target -value))))
+                                                     })))
+
+
+                   (apply dom/div nil
+                          (om/build-all option-slider (map
+                                                       (fn [option-cursor] {:option option-cursor
+                                                                            :selections (:selections new-participant)})
+                                                       options))
+                          )
+
+
+                   (dom/pre nil (prn-str state))
+
+                   )))
+
+
+
+
+
+
+(defcomponent state-debug [app-state owner]
+
+  (render [this]
+
+          (dom/pre nil (prn-str app-state))))
 
 (defcomponent main-page [app-state owner]
 
@@ -392,7 +477,8 @@
                    ;; LIST PARTICIPANTS
                    (if (:saved app-state)
 
-                     (om/build vote-component (:options app-state))
+                     (om/build vote-component {:new-participant (:new-participant app-state)
+                                               :options (:options app-state)})
 
                      (om/build participant-list (:participants app-state)))
 
@@ -404,7 +490,15 @@
                                {:state {:saved (:saved app-state)}}))
 
                    ;; CLOODLE-CODE SHARING INFO BOX
-                   (om/build cloodle-code (:cloodle-code app-state) {:state {:saved (:saved app-state)}}))))
+                   (om/build cloodle-code (:cloodle-code app-state) {:state {:saved (:saved app-state)}})
+
+
+
+
+                   (om/build state-debug app-state)
+
+
+                   )))
 
 
 
