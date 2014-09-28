@@ -30,7 +30,7 @@
   (GET "/" [] (ring/redirect "/front.html"))
   (POST "/api/event" {params :params} ;; if params are empty, check that you have Content-Type: application/json. br, Jarkko
         (prn params)
-        (ring/response (dao/create-event params)))
+        (dao/create-event params))
   (GET "/api/event/:eventhash" [eventhash] 
 ;       (prn " Getting from mongo! " eventhash) 
        (ring/response (dao/get-by-eventhash eventhash)))

@@ -3,7 +3,8 @@
             [monger.conversion :refer [from-db-object]])
   (:use [monger.core :only [connect get-db disconnect authenticate]])
   (:require [validateur.validation :refer :all])
-  (:require [crypto.random :as crypto]))
+  (:require [crypto.random :as crypto])
+  (:require [ring.util.response :as ring]))
 
 (def key-size 16)
 (def database (atom nil))
@@ -41,8 +42,8 @@
     (let []
       (prn "no errors!")
       (mc/insert @database collection (merge {:eventhash eventhash} params))
-      eventhash)
-  errors)))
+      (ring/response eventhash))
+  {:status 500 :body errors})))
 
 (defn strip-mongo-id[event]
   "Strip mongo object ids from the stuff that comes out of mongo db. It does not serialize to json"
