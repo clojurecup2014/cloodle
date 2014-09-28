@@ -41,15 +41,21 @@
   "Strip mongo object ids from the stuff that comes out of mongo db. It does not serialize to json"
   (dissoc event :_id))
 
+(defn find-one-by-ehash[ehash]
+  (mc/find-one-as-map @database collection {:eventhash ehash}))
+
 (defn get-by-eventhash[ehash]
   "Get event from database by the eventhash"
-  (let [event (mc/find-one-as-map @database collection {:eventhash ehash})]
-;    (prn "found event " event)
+  (let [event (find-one-by-ehash ehash)]
     (strip-mongo-id event)))
 
 (defn update-event[event]
-   (prn "updating event " event))
-
+   (prn "updating event " event)
+   (let [event-from-db (find-one-by-ehash (:eventhash event))
+         doc-id (:_id event-from-db)
+         new-event (assoc event :_id doc-id)]
+       ;; finds and updates a document by _id because it is present
+       (strip-mongo-id (mc/save-and-return @database collection new-event))))
 
 (defn init[]
   "Initialize mongodb connection and database!"
@@ -57,3 +63,20 @@
   (let [uri (get-db-uri)
           {:keys [conn db]} (monger.core/connect-via-uri uri)]
     (reset! database db)))
+
+;(update-event {:name "111Movie night", 
+;               :description "Lets drink beers and watch some Arnold movie!",
+;               :eventhash "yVkLh3L-hTZ4VME3Dk5zgA"
+;               :options [{:id 1, :name "Popkok"} 
+;                         {:id 2, :name "fasfd"}
+;                         {:id 3, :name "joosdfasdfo"}], 
+;               :participants [{:id 1, :name "Pentti", 
+;                               :selections [{:optionId 1, :value 5}
+;                                            {:optionId 2, :value 1}
+;                                            {:optionId 3, :value 5}]} 
+;                              {:id 2, :name "Liisa", 
+;                               :selections [{:optionId 1, :value 20}
+;                                            {:optionId 2, :value 31}
+;                                            {:optionId 3, :value 80}]}]})
+(init)
+
