@@ -6,6 +6,7 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [om "0.7.3"]
                  [prismatic/om-tools "0.3.2" :exclusions [org.clojure/clojure]]
+                 [cljs-http "0.1.16"]
                  [compojure "1.1.8"]
                  [ring "1.2.1"]
                  [com.novemberain/monger "2.0.0"]
@@ -25,7 +26,7 @@
         :source-paths ["src/cljs"]
         :compiler {:output-to "resources/public/js/cloodle.js"
                    :output-dir "resources/public/js"
-                   :optimizations :simple
+                   :optimizations :none
                    :pretty-print true
                    :source-map "resources/public/js/cloodle.js.map"}
         :jar true}}}

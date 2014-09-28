@@ -4,7 +4,10 @@
             [om.dom :as dom :include-macros true]
             [om-tools.core :refer-macros [defcomponent]]
             [cljs.core.async :refer [put! chan <!]]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [cljs-http.client :as http]
+            ))
+
 
 
 
@@ -77,22 +80,49 @@
                                         "Add option")))))
 
 
+(defn state->save-payload [state]
+  "Transform the snapshot of the state to the form that the save interface accepts"
+
+  (select-keys state (disj (set (keys state)) :cloodle-code)))
+
 
 (defcomponent cloodle-form [form-data owner]
 
   (init-state [_]
               {:delete-option-chan (chan)
+               :save-event-chan (chan)
+               :save-result-chan (chan)
                :new-option-text ""})
 
   (will-mount [_]
-              (let [delete (om/get-state owner :delete-option-chan)]
+              (let [delete (om/get-state owner :delete-option-chan)
+                    save (om/get-state owner :save-event-chan)]
+
                 (go (loop []
                       (let [option (<! delete)]
 
                         (om/transact! form-data :options
                                       (fn [xs] (vec (remove #(= option %) xs))))
 
-                        (recur))))))
+                        (recur))))
+
+                (go (loop []
+                      (let [save-event (<! save)
+                            payload (state->save-payload save-event)]
+
+                        (print "Got save event: " payload)
+
+                        (go
+                         (let [response (<! (http/post "api/event" {:json-params payload}))]
+                           (print (:status response))
+                           (print (:body response))
+
+                           ))
+
+                        (recur))))
+
+
+                ))
 
   (render-state [this state]
 
@@ -144,7 +174,10 @@
 
                                       (dom/div #js {:className "col-sm-2"} nil)
                                       (dom/div #js {:className "col-sm-6"}
-                                               (dom/button #js {:type "button" :className "btn btn-success"}
+                                               (dom/button #js {:type "button"
+                                                                :className "btn btn-success"
+                                                                :onClick (fn [e] (put! (:save-event-chan state) @form-data)) ;; (do (put! delete-chan @option-data) false)
+                                                                }
                                                            (dom/span #js {:className "glyphicon glyphicon-ok"})
                                                            (dom/span nil " Create!"))))))))
 
