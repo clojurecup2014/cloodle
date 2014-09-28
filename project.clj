@@ -12,6 +12,9 @@
                  [ring/ring-json "0.3.1"]
                  [crypto-random "1.2.0"]
                  [com.novemberain/validateur "2.3.1"]]
+  :profiles {:dev {:dependencies [[midje "1.6.3"]]}
+             :test-test-paths {:test-paths ["test"]}
+             :plugins [[lein-midje "3.1.3"]]}
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-ring "0.8.10"]]
   :hooks [leiningen.cljsbuild]
