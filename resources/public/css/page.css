@@ -1,3 +1,12 @@
 .cloodle-name {
   font-family: 'Permanent Marker', cursive;
 }
+
+.cloodle-code-box {
+  width: 50%;
+  -webkit-border-radius: 30px;
+  -moz-border-radius: 30px;
+  border-radius: 30px;
+  padding: 20px 20px 20px 20px;
+  border: solid gray 2px;
+}
