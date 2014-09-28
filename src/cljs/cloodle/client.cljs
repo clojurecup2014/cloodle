@@ -29,6 +29,8 @@
 
       cloodle-code)))
 
+
+
 (defn build-initial-state []
 
   (let [cloodle-code (get-cloodle-code)]
@@ -335,18 +337,6 @@
 
 
 
-(defcomponent participant-component [participant owner]
-
-  (render [this]
-          (dom/div nil
-                   (dom/h4 nil (:name participant)))))
-
-(defcomponent participant-list [participants owner]
-  (render [this]
-          (dom/div nil
-                   (dom/h1 nil "Participants")
-                   (apply dom/div nil
-                          (om/build-all participant-component participants)))))
 
 
 (defn get-selection-by-id [selections id]
@@ -365,10 +355,10 @@
                                (let [id (:id @option)
                                      selection (get-selection-by-id xs id)]
 
-                                 (conj (remove #(= (:id %) id) xs) {:id id :value val}))))
+                                 (conj (remove #(= (:id %) id) xs) {:optionId id :value val}))))
 
     ;; ADD NEW SELECTION
-    (om/transact! selections (fn [xs] (conj xs {:id (:id @option) :value val})))
+    (om/transact! selections (fn [xs] (conj xs {:optionId (:id @option) :value val})))
 
     ))
 
@@ -390,7 +380,7 @@
 
 
                    (.noUiSlider $slider-element parameters)
-                   (.on $slider-element #js {:slide #(handle-slider-change (.val $slider-element) selections option owner)}))))
+                   (.on $slider-element #js {:slide #(handle-slider-change (js/parseInt (.val $slider-element)) selections option owner)}))))
 
 
 
@@ -416,7 +406,51 @@
 
   )
 
-(defcomponent vote-component [{:keys [new-participant options]} owner]
+
+(defn vote->save-payload [new-participant app-state new-id]
+
+  (let [new-participant-with-id (assoc-in new-participant [:id] new-id)
+        state-with-new-participant
+        (assoc-in app-state [:participants]
+            (conj (get-in app-state [:participants]) new-participant-with-id))]
+
+        (apply dissoc state-with-new-participant [:saved :new-participant])
+
+    ))
+
+(defcomponent vote-component [{:keys [app-state new-participant options]} owner]
+
+    (init-state [_]
+              {:save-vote-chan (chan)
+               :new-participant-id (inc (max-id (:participants app-state)))
+
+               })
+
+
+    (will-mount [_]
+              (let [save (om/get-state owner :save-vote-chan)]
+
+
+                ;; SAVE VOTE
+                (go (loop []
+                      (let [new-participant (<! save)
+                            payload (vote->save-payload new-participant @app-state (om/get-state owner :new-participant-id))]
+
+
+
+                        (print payload)
+
+                        (go
+                         (let [response (<! (http/post "api/event/join" {:json-params payload}))
+                               status (:status response)]
+
+
+                           (print response)
+
+                           ))
+
+                        (recur))))))
+
 
 
   (render-state [this state]
@@ -448,12 +482,53 @@
                           )
 
 
-                   (dom/pre nil (prn-str state))
+
+                   (dom/button #js {:type "button"
+                                             :className "btn btn-success"
+                                             :onClick (fn [e] (put! (:save-vote-chan state) @new-participant))}
+                                        "Save vote")
+
+
+                   ; (dom/pre nil (prn-str state))
 
                    )))
 
 
 
+(defcomponent participant-component [cursors owner]
+
+  (render [this]
+
+
+          (om/build vote-component cursors)
+
+
+          ))
+
+(defcomponent participant-list [cursors owner]
+
+
+  (render [this]
+
+
+          (dom/div nil
+                   (dom/h1 nil "Participants")
+                   (apply dom/div nil
+                          (om/build-all participant-component
+                                        (let [cursors (map
+                                                       (fn [participant-cursor] {:app-state (:app-state cursors)
+                                                                                 :participant participant-cursor
+                                                                                 :options (:options cursors)})
+                                                       (:participants cursors))]
+
+
+                                         (print "CUrsors " cursors)
+                                          cursors
+
+
+
+
+                                        ))))))
 
 
 
@@ -477,10 +552,17 @@
                    ;; LIST PARTICIPANTS
                    (if (:saved app-state)
 
-                     (om/build vote-component {:new-participant (:new-participant app-state)
+                     (dom/div nil
+                     (om/build vote-component {:app-state app-state
+                                               :new-participant (:new-participant app-state)
                                                :options (:options app-state)})
 
-                     (om/build participant-list (:participants app-state)))
+                     (om/build participant-list {:participants (:participants app-state)
+                                                 :app-state app-state
+                                                 :options (:options app-state)
+                                                 }))
+
+                     )
 
 
                    ;; NEW EVENT FORM
@@ -495,7 +577,7 @@
 
 
 
-                   (om/build state-debug app-state)
+                   ; (om/build state-debug app-state)
 
 
                    )))
@@ -503,6 +585,8 @@
 
 
 
+
+;(print (:participants @app-state))
 
 
 (om/root main-page app-state
