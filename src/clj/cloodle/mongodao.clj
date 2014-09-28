@@ -50,12 +50,16 @@
     (strip-mongo-id event)))
 
 (defn update-event[event]
-   (prn "updating event " event)
-   (let [event-from-db (find-one-by-ehash (:eventhash event))
-         doc-id (:_id event-from-db)
-         new-event (assoc event :_id doc-id)]
-       ;; finds and updates a document by _id because it is present
-       (strip-mongo-id (mc/save-and-return @database collection new-event))))
+   (prn "updating event and validating" event)
+   (let [errors (v/validate-event-update event)]
+   (if (empty? errors)
+     (let [event-from-db (find-one-by-ehash (:eventhash event))
+           doc-id (:_id event-from-db)
+           new-event (assoc event :_id doc-id)]
+         ;; finds and updates a document by _id because it is present
+         (strip-mongo-id (mc/save-and-return @database collection new-event)))
+   {:status 500 :body errors })))
+
 
 (defn init[]
   "Initialize mongodb connection and database!"
@@ -63,20 +67,4 @@
   (let [uri (get-db-uri)
           {:keys [conn db]} (monger.core/connect-via-uri uri)]
     (reset! database db)))
-
-;(update-event {:name "111Movie night", 
-;               :description "Lets drink beers and watch some Arnold movie!",
-;               :eventhash "yVkLh3L-hTZ4VME3Dk5zgA"
-;               :options [{:id 1, :name "Popkok"} 
-;                         {:id 2, :name "fasfd"}
-;                         {:id 3, :name "joosdfasdfo"}], 
-;               :participants [{:id 1, :name "Pentti", 
-;                               :selections [{:optionId 1, :value 5}
-;                                            {:optionId 2, :value 1}
-;                                            {:optionId 3, :value 5}]} 
-;                              {:id 2, :name "Liisa", 
-;                               :selections [{:optionId 1, :value 20}
-;                                            {:optionId 2, :value 31}
-;                                            {:optionId 3, :value 80}]}]})
-(init)
 

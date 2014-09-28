@@ -71,8 +71,19 @@
     (presence-of :value :message "Participant must have name")
     (numericality-of :value :only-integer true :gte 0 :lte 100 )))
 
-
 (defn validate-selection-data [event]
   (for [selected (seq(:selections event))]
     (nest (:optionId selected)
            (selection-validator selected))))
+
+(defn validate-event-update[event] 
+  (let [errors (validate-event event) ;ok
+        p-errors (validate-participant-data event) ;ok
+        s-errors (flatten (map #(validate-selection-data %) (:participants event)))] ;participants contain the selection data
+    (cond 
+       (not-empty errors) errors
+       (not-empty (filter #(not-empty %)  p-errors)) p-errors
+       (not-empty (filter #(not-empty %)  s-errors)) s-errors ;'({}{}{}) check if it is empty
+       :else {})))
+
+;(validate-event-update eventv)
