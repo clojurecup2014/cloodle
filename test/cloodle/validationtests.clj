@@ -3,7 +3,19 @@
         midje.sweet)
   (:require [cloodle.validations :as v]))
   
-(def event  {:name "Movie night", :description "Lets drink beers and watch some Arnold movie!", :options [{:id 1, :name "Terminator 2. The Judgment Day"} {:id 2, :name "The Running Man"} {:id 3, :name "Commando"}], :participants [{:id 1, :name "Jarkko", :selections [{:optionId 1, :value 45} {:optionId 2, :value 11} {:optionId 3, :value 85}]} {:id 2, :name "Janne", :selections [{:optionId 1, :value 60} {:optionId 2, :value 33} {:optionId 3, :value 100}]}]})
+(def event  {:name "Movie night", 
+             :description "Lets drink beers and watch some Arnold movie!", 
+             :options [{:id 1, :name "Terminator 2. The Judgment Day"}
+                       {:id 2, :name "The Running Man"}
+                       {:id 3, :name "Commando"}], 
+             :participants [{:id 1, :name "Jarkko",
+                             :selections [{:optionId 1, :value 45} 
+                                          {:optionId 2, :value 11} 
+                                          {:optionId 3, :value 85}]} 
+                            {:id 2, :name "Janne", 
+                             :selections [{:optionId 1, :value 60} 
+                                          {:optionId 2, :value 33} 
+                                          {:optionId 3, :value 100}]}]})
 
 (facts "Event must have name, description and options"
         (v/validate-event event) => {}
@@ -22,3 +34,43 @@
    (v/validate-options-length event) => {}
    (v/validate-options-length {:options [{:id 1, :name "Terminator 2"} {:id 2, :name "The Running Man"} {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"}   {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"} {:id 2, :name "The Running Man"} ]}) => {:optionslength #{"4. Too many options"}}
    (v/validate-options-length {:options [{:id 1, :name "Terminator 2"} {:id 2, :name "The Running Man"} {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"}   {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"}  {:id 2, :name "The Running Man"}]}) => {})
+
+(fact "When updating the event there must be participants included!" 
+      (v/validate-participants event) => {}
+      (v/validate-participants (dissoc event :participants)) => {:participants #{"Must include participants"}})
+
+(def participant {:participants [{:id 1, :name "Jarkko",
+                             :selections [{:optionId 1, :value 45} 
+                                          {:optionId 2, :value 11} 
+                                          {:optionId 3, :value 85}]} 
+                            {:id 2, :name "Janne", 
+                             :selections [{:optionId 1, :value 60} 
+                                          {:optionId 2, :value 33} 
+                                          {:optionId 3, :value 100}]}]})
+(def malformed-participants {:participants [{:id 1, 
+                                        :selections [{:optionId 1, :value 45} 
+                                                     {:optionId 2, :value 11} 
+                                                     {:optionId 3, :value 85}]} 
+                                       { :name "Janne"}]})
+
+(fact "Particpant must have id and name and selections" 
+      (v/validate-participant-data participant) => '({}{})
+      (v/validate-participant-data malformed-participants) => '({[1 :name] #{"Participant must have name"}} {[nil :id] #{"Participant must have id" "can't be blank"}, [nil :selections] #{"Participant must have the selections"}}))
+
+(def selections  {:selections [{:optionId 1, :value 60} 
+                                             {:optionId 2, :value 0}
+                                             {:optionId 3, :value 100}]})
+
+(def malformed-selections  {:selections [{} {:optionId "aa", :value -1}
+                                            {:optionId 3, :value "moi"}
+                                            {:optionId 4, :value 101}]})
+
+(fact "selections must have optionId and value, which must be integers" 
+      (v/validate-selection-data selections)  => '({}{}{})
+      (v/validate-selection-data malformed-selections)  => ' ({[nil :optionId] #{"Participant must have id" "can't be blank"}, 
+                                                               [nil :value] #{"Participant must have name" "can't be blank"}} 
+                                                               {["aa" :optionId] #{"should be a number" "should be an integer"}, 
+                                                                ["aa" :value] #{"should be greater than or equal to 0"}} 
+                                                               {[3 :value] #{"should be a number" "should be an integer"}}
+                                                               {[4 :value] #{"should be less than or equal to 100"}}))
+

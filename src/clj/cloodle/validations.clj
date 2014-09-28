@@ -44,7 +44,35 @@
        (not-empty (filter #(not-empty %)  options-data)) options-data ;'({}{}{}) check if it is empty
        :else {})))
 
+(defn validate-participants[event]
+  (let [v (validation-set
+     (presence-of :participants :message "Must include participants"))] 
+     (v event)))
+
+(def participant-validator
+  (validation-set 
+    (presence-of :id :message "Participant must have id")
+    (numericality-of :id :only-integer true )
+    (presence-of :name :message "Participant must have name")
+    (presence-of :selections :message "Participant must have the selections")))
+
+(defn isempty-errors[errors] 
+  (not-empty (filter #(not-empty %)  errors)))
+
+(defn validate-participant-data [event]
+  (for [option (seq(:participants event))]
+    (nest (:id option)
+           (participant-validator option))))
+
+(def selection-validator
+  (validation-set 
+    (presence-of :optionId :message "Participant must have id")
+    (numericality-of :optionId :only-integer true )
+    (presence-of :value :message "Participant must have name")
+    (numericality-of :value :only-integer true :gte 0 :lte 100 )))
 
 
-
-
+(defn validate-selection-data [event]
+  (for [selected (seq(:selections event))]
+    (nest (:optionId selected)
+           (selection-validator selected))))

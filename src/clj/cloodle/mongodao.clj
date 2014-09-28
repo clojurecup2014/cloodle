@@ -47,6 +47,10 @@
 ;    (prn "found event " event)
     (strip-mongo-id event)))
 
+(defn update-event[event]
+   (prn "updating event " event))
+
+
 (defn init[]
   "Initialize mongodb connection and database!"
   (prn "MongoDb init running")
