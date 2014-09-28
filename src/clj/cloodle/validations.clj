@@ -9,7 +9,7 @@
      (presence-of :options :message "Options must be defined"))]
      (v event))) 
 
-(def min-options 1)
+(def min-options 2)
 (def max-options 10)
 
 (defn validate-options-length[event]
