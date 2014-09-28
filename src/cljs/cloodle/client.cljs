@@ -39,8 +39,6 @@
 
                 (if visible
                   (dom/div nil
-
-
                            (dom/h1 nil (:name form-data))
                            (dom/h2 nil (:description form-data))))))
 
@@ -73,26 +71,35 @@
 (defn handle-new-option-change [e owner {:keys [new-option-text]}]
   (om/set-state! owner :new-option-text (.. e -target -value)))
 
+(defn handle-value-change [e owner form-data ref-name state-key]
+  (let [new-value (-> (om/get-node owner ref-name)
+                     .-value)]
+    (om/transact! form-data state-key (fn [_] new-value))))
+
+
+(defn to-link [code]
+    (dom/a #js {:href (str "event/" code)} code))
+
 
 ;; CLOODLE CODE COMPONENT
 (defcomponent cloodle-code [code owner]
 
 
   (render-state [this state]
-          (print (:saved state))
+
           (if (:saved state)
             (dom/div #js {:className "center-block bg-info cloodle-code-box"}
-                     (dom/h1 nil
+                     (dom/h3 nil
 
                              (dom/span nil "This event's ")
                              (dom/span #js {:className "cloodle-name"} "Cloodle")
-                             (dom/span nil " code is"))
+                             (dom/span nil " link is"))
 
                      (dom/div #js {:className "alert alert-success center-block" :role "alert"}
 
-                              (dom/h1 #js {:className "center-block"} code))
+                              (dom/h2 #js {:className "center-block"} (to-link code)))
 
-                     (dom/h1 nil "Share it with your friends and have them vote on the options!")))))
+                     (dom/h3 nil "Share it with your friends and have them vote on the options!")))))
 
 
 
@@ -127,6 +134,9 @@
   "Transform the snapshot of the state to the form that the save interface accepts"
 
   (select-keys state (disj (set (keys state)) :cloodle-code)))
+
+
+
 
 
 ;; MAIN FORM COMPONENT
@@ -199,7 +209,9 @@
                                                (dom/input #js {:id "name"
                                                                :className "form-control"
                                                                :type "text"
-                                                               :value (:name form-data)})))
+                                                               :value (:name form-data)
+                                                               :ref "event-name"
+                                                               :onChange  #(handle-value-change % owner form-data "event-name" :name)})))
 
                              ;; TODO: Label / Input pairs as components?
                              ;; DESCRIPTION
@@ -207,11 +219,14 @@
                                       (dom/label #js {:htmlFor "description"
                                                       :className "col-sm-2 control-label"}
                                                  "Event description")
+
                                       (dom/div #js {:className "col-sm-6"}
                                                (dom/input #js {:id "description"
                                                                :className "form-control"
                                                                :type "text"
-                                                               :value (:description form-data)})))
+                                                               :value (:description form-data)
+                                                               :ref "event-description"
+                                                               :onChange  #(handle-value-change % owner form-data "event-description" :description)})))
 
 
                              ;; EXISTING OPTIONS
@@ -263,7 +278,29 @@
 
   )
 
+
+
+(defn get-current-url []
+  (.-href (.-location js/window)))
+
+(defn get-cloodle-code []
+
+  (let [url (get-current-url)
+        event-id-matching (re-find #"event=(.+)" url)]
+
+    (if-let [cloodle-code
+             (when (coll? event-id-matching)
+               (second event-id-matching))]
+
+      cloodle-code)))
+
+
+
+
+
 (om/root main-page app-state
          {:target (. js/document (getElementById "my-app"))})
+
+
 
 
