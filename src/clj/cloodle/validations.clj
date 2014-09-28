@@ -22,7 +22,6 @@
       (> (count options) max-options){:optionslength #{"4. Too many options"}}
       :else  {})))
 
-
 (def option-validator
   (validation-set 
     (presence-of :id :message "option must have id")
@@ -56,8 +55,6 @@
     (presence-of :name :message "Participant must have name")
     (presence-of :selections :message "Participant must have the selections")))
 
-(defn isempty-errors[errors] 
-  (not-empty (filter #(not-empty %)  errors)))
 
 (defn validate-participant-data [event]
   (for [option (seq(:participants event))]
@@ -76,14 +73,32 @@
     (nest (:optionId selected)
            (selection-validator selected))))
 
+(def max-participants 20)
+
+(defn validate-participants-length[event]
+  "validate the participants in the event"
+  (let [participants (seq (:participants event))]
+    (cond 
+      (> (count participants) max-participants){:participantslength #{"1. too many participants"}}
+      :else  {})))
+
+(defn get-selection-lengths[event] 
+   (map #(count (% :selections)) (:participants event)))
+
+(defn selections-valid-length[event]
+  (cond (not-empty (filter #(> % max-options) (get-selection-lengths event))) {:selectionslength "too many selections "}
+        :else {}))
+
 (defn validate-event-update[event] 
   (let [errors (validate-event event) ;ok
         p-errors (validate-participant-data event) ;ok
-        s-errors (flatten (map #(validate-selection-data %) (:participants event)))] ;participants contain the selection data
+        s-errors (flatten (map #(validate-selection-data %) (:participants event)))  ;participants contain the selection data
+        slen-errors (selections-valid-length event)]
     (cond 
        (not-empty errors) errors
        (not-empty (filter #(not-empty %)  p-errors)) p-errors
-       (not-empty (filter #(not-empty %)  s-errors)) s-errors ;'({}{}{}) check if it is empty
+       (not-empty (filter #(not-empty %)  s-errors)) s-errors;'({}{}{}) check if it is empty
+       (not-empty slen-errors) slen-errors
        :else {})))
 
-;(validate-event-update eventv)
+
