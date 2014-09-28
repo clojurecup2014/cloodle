@@ -7,6 +7,7 @@
                  [om "0.7.3"]
                  [prismatic/om-tools "0.3.2" :exclusions [org.clojure/clojure]]
                  [cljs-http "0.1.16"]
+                 [jayq "2.5.2"]
                  [compojure "1.1.8"]
                  [ring "1.2.1"]
                  [com.novemberain/monger "2.0.0"]
@@ -28,7 +29,9 @@
                    :output-dir "resources/public/js"
                    :optimizations :none
                    :pretty-print true
-                   :source-map "resources/public/js/cloodle.js.map"}
+                   :source-map "resources/public/js/cloodle.js.map"
+                   :externs ["resources/public/ext-js/jquery.nouislider.all.js"]
+                   }
         :jar true}}}
   :main cloodle.server
   :ring {:handler cloodle.server/app

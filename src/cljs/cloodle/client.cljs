@@ -6,7 +6,8 @@
             [cljs.core.async :refer [put! chan <!]]
             [clojure.string :as string]
             [cljs-http.client :as http]
-            ))
+            )
+  (:use [jayq.core :only [$ css html]]))
 
 
 
@@ -14,18 +15,77 @@
 
 (enable-console-print!)
 
-(def app-state
-  (atom
-   {
-    :name "Movie Night"
-    :description "Let's drink beer and watch an Arnie movie"
-    :options [
-              {:name "Terminator 2"}
-              {:name "Commando"}
-              {:name "Conan The Barbarian"}
-              {:name "Junior"}]
-    :cloodle-code ""
-    :saved false}))
+(defn get-current-url []
+  (.-href (.-location js/window)))
+
+(defn get-cloodle-code []
+
+  (let [url (get-current-url)
+        event-id-matching (re-find #"event=(.+)" url)]
+
+    (if-let [cloodle-code
+             (when (coll? event-id-matching)
+               (second event-id-matching))]
+
+      cloodle-code)))
+
+(defn build-initial-state []
+
+  (let [cloodle-code (get-cloodle-code)]
+
+    (if cloodle-code
+      (atom
+       {:name "Existing movie night"
+        :description "Good times will be had with one of these movies"
+        :cloodle-code cloodle-code
+        :options [
+                  {:id 1 :name "Terminator 2"}
+                  {:id 2 :name "Commando"}
+                  {:id 3 :name "Conan The Barbarian"}
+                  {:id 4 :name "Junior"}]
+
+        :participants [
+
+                       {:id 1
+                        :name "Jarkko"
+                        :selections [
+
+                                     {:optionId 1
+                                      :value 45}
+
+                                     {:optionId 2
+                                      :value 11}
+
+                                     {:optionId 3
+                                      :value 90}
+
+                                     {:optionId 4
+                                      :value 70}
+
+
+                                     ]
+
+                        }
+
+
+                       ]
+
+        :saved true})
+
+      (atom
+       {
+        :name "Movie Night"
+        :description "Let's drink beer and watch an Arnie movie"
+        :options [
+                  {:id 1 :name "Terminator 2"}
+                  {:id 2 :name "Commando"}
+                  {:id 3 :name "Conan The Barbarian"}
+                  {:id 4 :name "Junior"}]
+        :cloodle-code ""
+        :saved false})
+      )))
+
+(def app-state (build-initial-state))
 
 (defn display [show]
   (if show
@@ -40,13 +100,13 @@
                 (if visible
                   (dom/div nil
                            (dom/h1 nil (:name form-data))
-                           (dom/h2 nil (:description form-data))))))
+                           (dom/p nil (:description form-data))))))
 
 (defcomponent option-container [option-data owner]
   (render-state [this {:keys [delete-chan]}]
 
           (dom/div #js {:style #js {:margin-bottom "5px"}}
-                   (dom/div #js {:className "pull-left"} (:name option-data))
+                   (dom/div #js {:className "pull-left"} (str (:name option-data) (:id option-data)))
                    (dom/div #js {:className "pull-right"}
 
                             (dom/button #js {:type "button" :className "btn btn-danger btn-xs"
@@ -60,12 +120,16 @@
 
   ))
 
+(defn max-id [maps-with-ids]
+  (:id (last (sort-by :id maps-with-ids))))
+
 (defn add-option [form-data owner]
   (let [new-option (-> (om/get-node owner "new-option")
                        .-value)]
     (when (not (string/blank? new-option))
-      (om/transact! form-data :options #(conj % {:name new-option}))))
-      (om/set-state! owner :new-option-text ""))
+      (let [next-id (inc (max-id (:options @form-data)))]
+        (om/transact! form-data :options #(conj % {:name new-option :id next-id}))))
+        (om/set-state! owner :new-option-text "")))
 
 
 (defn handle-new-option-change [e owner {:keys [new-option-text]}]
@@ -182,7 +246,8 @@
 
 
                               ;; TODO: Display errors? Or rather prevent sending this stuff via UI
-                              (print "Nope, failers"))
+                              (print (str "Save failed: " (:body response))))
+
 
 
 
@@ -258,41 +323,89 @@
                                                            (dom/span #js {:className "glyphicon glyphicon-ok"})
                                                            (dom/span nil " Create!")))))
 
-                   (om/build cloodle-code (:cloodle-code form-data) {:state {:saved (:saved state)}}))))
+                   )))
 
+
+
+(defcomponent participant-component [participant owner]
+
+  (render [this]
+          (dom/div nil
+                   (dom/h4 nil (:name participant)))))
+
+(defcomponent participant-list [participants owner]
+  (render [this]
+          (dom/div nil
+                   (dom/h1 nil "Participants")
+                   (apply dom/div nil
+                          (om/build-all participant-component participants)))))
+
+
+
+(defcomponent slider [slider owner]
+
+      (render [_]
+              (dom/div #js {:className "slider col-sm-6"} nil))
+
+      (did-mount [state]
+                 (let [$slider-element ($ (.getDOMNode owner))
+                       parameters #js {:start (:value slider)
+                                       :range #js {"max" #js [100] "min" #js [0]}
+                                       :step 1
+                                       :format (js/wNumb #js {:mark "," :decimals 1})
+                                       }]
+
+
+                   (.noUiSlider $slider-element parameters)
+                   (.on $slider-element #js {:slide #(handle-slider-change (.val $slider-element) slider owner)}))))
+
+
+
+(defcomponent option-slider [option owner]
+  (render [this]
+
+          (dom/div #js {:className "row" :style #js {:margin-bottom "15px"}}
+            (dom/div #js {:className "col-sm-2"} (:name option))
+            (om/build slider option)
+            )))
+
+
+
+(defcomponent vote-component [options owner]
+  (render [this]
+          (dom/div #js {:style #js {:border "solid black 1px"}}
+                   (apply dom/div nil
+                          (om/build-all option-slider options)))))
 
 
 (defcomponent main-page [app-state owner]
 
   (render [this]
-    (dom/div nil
-      (om/build title-and-description
-                (select-keys app-state [:name :description])
-                {:state {:visible (:saved app-state)}})
+          (dom/div nil
 
-      (om/build cloodle-form
-                app-state
-                {:state {:saved (:saved app-state)}})))
+                   ;; TITLE AND DESCRIPTION (FOR EXISTING EVENT)
+                   (om/build title-and-description
+                             (select-keys app-state [:name :description])
+                             {:state {:visible (:saved app-state)}})
 
 
+                   ;; LIST PARTICIPANTS
+                   (if (:saved app-state)
 
-  )
+                     (om/build vote-component (:options app-state))
+
+                     (om/build participant-list (:participants app-state)))
 
 
+                   ;; NEW EVENT FORM
+                   (if (not (:saved app-state))
+                     (om/build cloodle-form
+                               app-state
+                               {:state {:saved (:saved app-state)}}))
 
-(defn get-current-url []
-  (.-href (.-location js/window)))
+                   ;; CLOODLE-CODE SHARING INFO BOX
+                   (om/build cloodle-code (:cloodle-code app-state) {:state {:saved (:saved app-state)}}))))
 
-(defn get-cloodle-code []
-
-  (let [url (get-current-url)
-        event-id-matching (re-find #"event=(.+)" url)]
-
-    (if-let [cloodle-code
-             (when (coll? event-id-matching)
-               (second event-id-matching))]
-
-      cloodle-code)))
 
 
 

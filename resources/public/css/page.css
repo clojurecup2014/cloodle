@@ -10,3 +10,10 @@
   padding: 20px 20px 20px 20px;
   border: solid gray 2px;
 }
+
+.slider {
+  background-image: linear-gradient(to left, #27ae60, #c0392b) !important;
+  border: solid black 1px !important;
+  width: 450px;
+  float: left;
+}
