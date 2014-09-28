@@ -106,7 +106,7 @@
   (render-state [this {:keys [delete-chan]}]
 
           (dom/div #js {:style #js {:margin-bottom "5px"}}
-                   (dom/div #js {:className "pull-left"} (str (:name option-data) (:id option-data)))
+                   (dom/div #js {:className "pull-left"} (:name option-data))
                    (dom/div #js {:className "pull-right"}
 
                             (dom/button #js {:type "button" :className "btn btn-danger btn-xs"
