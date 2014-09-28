@@ -74,3 +74,33 @@
                                                                {[3 :value] #{"should be a number" "should be an integer"}}
                                                                {[4 :value] #{"should be less than or equal to 100"}}))
 
+(fact "Participants cannot be more than 20 people"  
+      (v/validate-participants-length  {:participants []}) => {}
+      (v/validate-participants-length  {}) => {}
+      (v/validate-participants-length  {:participants (vec (repeat 5 {:name "Jarski"} ) )}) => {}
+      (v/validate-participants-length  {:participants (vec (repeat 20 {:name "Jarski"} ) )}) => {}
+      (v/validate-participants-length  {:participants (vec (repeat 21 {:name "Jarski"} ) )})=> {:participantslength #{"1. too many participants"}})
+
+(def event-with-too-many-selections  {:name "Movie night", 
+                                      :description "Lets drink beers and watch some Arnold movie!", 
+                                      :options [{:id 1, :name "Terminator 2. The Judgment Day"}
+                                                {:id 2, :name "The Running Man"}
+                                                {:id 3, :name "Commando"}], 
+                                      :participants [{:id 1, :name "Jarkko",
+                                                      :selections [{:optionId 1, :value 45} 
+                                                                   {:optionId 2, :value 11} 
+                                                                   {:optionId 3, :value 85}]} 
+                                                     {:id 2, :name "Janne", 
+                                                      :selections (vec (repeat 11 {:optionId 2, :value "joo"}))} ;;here is the beef
+                                                     {:id 1, :name "Jarkko",
+                                                      :selections (vec (repeat 9 {:optionId 2, :value "joo"}))} 
+                                                     {:id 2, :name "Janne", 
+                                                      :selections [{:optionId 1, :value 60} 
+                                                                   {:optionId 2, :value 33} 
+                                                                   {:optionId 3, :value 100}
+                                                                   {:optionId 3, :value 100}
+                                                                   {:optionId 3, :value 100}]}]})
+
+(fact "You cant have more than 10 selections per participant"
+       (v/selections-valid-length event) => {}
+       (v/selections-valid-length event-with-too-many-selections) =>{:selectionslength "too many selections "})
