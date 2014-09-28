@@ -28,74 +28,43 @@
                (second event-id-matching))]
 
       cloodle-code)))
+;;;;;;;;
+;;http://localhost:3000/cloodle.html?event=ngKS_s4ovZ_Nn6oOF3cfUg
+;;FX8eO5tHq-f2L3_yWiIY6g
+;(defn get-existing-event[eventhash]
+;  (go
+;   (let [response (<! (http/get (str "api/event/" eventhash) {}))
+;         status (:status response)]
+;       (print (str "GOT FROM SERVER " (:body response)))
+;       (let [event (:body response)
+;             new-event (assoc event :new-participant {
+;                                                      :name ""
+;                                                      :selections []
+;                                                      })
+;             new-event2 (assoc new-event :saved "true")
+;             new-event3 (assoc new-event2 :cloodle-code eventhash)]
+;         new-event3))))
+                        
+(defn get-existing-event[eventhash]
+  (go 
+   (let [response (<! (http/get (str "api/event/" eventhash)))
+         status (:status response)]
+       (print (str "GOT FROM SERVER " (:body response)))
+       (let [event (:body response)
+             new-event (merge event {:new-participant { :name ""
+                                                                :selections []
+                                                                }
+                                     :saved true, 
+                                     :cloodle-code eventhash})]
+         
+         new-event))))
+;;;;;;;;;;;;                        
 
 
 
-(defn build-initial-state []
-
-  (let [cloodle-code (get-cloodle-code)]
-
-    (if cloodle-code
-      (atom
-       {:name "Existing movie night"
-        :description "Good times will be had with one of these movies"
-        :cloodle-code cloodle-code
-        :options [
-                  {:id 1 :name "Terminator 2"}
-                  {:id 2 :name "Commando"}
-                  {:id 3 :name "Conan The Barbarian"}
-                  {:id 4 :name "Junior"}]
-
-        :participants [
-
-                       {:id 1
-                        :name "Jarkko"
-                        :selections [
-
-                                     {:optionId 1
-                                      :value 45}
-
-                                     {:optionId 2
-                                      :value 11}
-
-                                     {:optionId 3
-                                      :value 90}
-
-                                     {:optionId 4
-                                      :value 70}
 
 
-                                     ]
 
-                        }
-
-
-                       ]
-
-
-        :new-participant {
-
-                          :name ""
-                          :selections []
-
-                          }
-
-        :saved true})
-
-      (atom
-       {
-        :name "Movie Night"
-        :description "Let's drink beer and watch an Arnie movie"
-        :options [
-                  {:id 1 :name "Terminator 2"}
-                  {:id 2 :name "Commando"}
-                  {:id 3 :name "Conan The Barbarian"}
-                  {:id 4 :name "Junior"}]
-        :cloodle-code ""
-        :saved false})
-      )))
-
-(def app-state (build-initial-state))
 
 (defn display [show]
   (if show
@@ -577,7 +546,7 @@
 
 
 
-                   ; (om/build state-debug app-state)
+                    (om/build state-debug app-state)
 
 
                    )))
@@ -589,8 +558,39 @@
 ;(print (:participants @app-state))
 
 
+(defn build-initial-state []
+  
+  (let [cloodle-code (get-cloodle-code)]
+;  (get-existing-event "ngKS_s4ovZ_Nn6oOF3cfUg") ;;fixme remove this
+       (if cloodle-code
+         (get-existing-event cloodle-code)
+         
+          {
+           :name "Movie Night"
+           :description "Let's drink beer and watch an Arnie movie"
+           :options [
+                     {:id 1 :name "Terminator 2"}
+                     {:id 2 :name "Commando"}
+                     {:id 3 :name "Conan The Barbarian"}
+                     {:id 4 :name "Junior"}]
+           :cloodle-code ""
+           :saved false}
+         )))
+
+(def app-state (atom nil))
+
+(reset! app-state (build-initial-state))
+
+(print @app-state)
+
+
 (om/root main-page app-state
-         {:target (. js/document (getElementById "my-app"))})
+       {:target (. js/document (getElementById "my-app"))})
+  
+  
+  
+
+
 
 
 
