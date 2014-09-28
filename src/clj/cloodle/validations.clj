@@ -38,15 +38,14 @@
    (let [basic (validate-event-basic-info event)
          options-l (validate-options-length event)
          options-data (validate-options event)]
+     (prn "basic " basic) 
+     (prn "options-l " options-l)
+     (prn "options-data " options-data)
      (cond 
        (not-empty basic) basic
        (not-empty options-l) options-l
-       (not-empty options-data) options-data
-       )))
-
-
-
-
+       (not-empty (filter #(not-empty %)  options-data)) options-data ;'({}{}{}) check if it is empty
+       :else {})))
 
 
 
