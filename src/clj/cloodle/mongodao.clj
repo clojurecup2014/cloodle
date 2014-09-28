@@ -49,18 +49,35 @@
   (let [event (find-one-by-ehash ehash)]
     (strip-mongo-id event)))
 
+(def event  {:eventhash "fasd"
+             :name "Movie night", 
+             :description "Lets drink beers and watch some Arnold movie!", 
+             :options [{:id 1, :name "Terminator 2. The Judgment Day"}
+                       {:id 2, :name "The Running Man"}
+                       {:id 3, :name "Commando"}], 
+             :participants [{:id 1, :name "Jarkko",
+                             :selections [{:optionId 1, :value 45} 
+                                          {:optionId 2, :value 11} 
+                                          {:optionId 3, :value 85}]} 
+                            {:id 2, :name "Janne", 
+                             :selections [{:optionId 1, :value 60} 
+                                          {:optionId 2, :value 33} 
+                                          {:optionId 3, :value 100}]}]})
+
 (defn update-event[event]
    (prn "updating event and validating" event)
-   (let [errors (v/validate-event-update event)]
-   (if (empty? errors)
-     (let [event-from-db (find-one-by-ehash (:eventhash event))
-           doc-id (:_id event-from-db)
-           new-event (assoc event :_id doc-id)]
-         ;; finds and updates a document by _id because it is present
-         (strip-mongo-id (mc/save-and-return @database collection new-event)))
-   {:status 500 :body errors })))
+   (let [errors (v/validate-event-update event)
+         exists (find-one-by-ehash (:eventhash event))]
+         (cond (not-empty errors) {:status 500 :body errors }
+               (nil? exists) {:status 500 :body "event not found in database"}
+               :else  (let [doc-id (:_id exists)
+                            new-event (assoc event :_id doc-id)]
+                          ;; finds and updates a document by _id because it is present
+                          (strip-mongo-id (mc/save-and-return @database collection new-event))))))
+   
 
-
+(update-event event)
+(find-one-by-ehash (:eventhash event))
 (defn init[]
   "Initialize mongodb connection and database!"
   (prn "MongoDb init running")
@@ -68,3 +85,4 @@
           {:keys [conn db]} (monger.core/connect-via-uri uri)]
     (reset! database db)))
 
+(init)
