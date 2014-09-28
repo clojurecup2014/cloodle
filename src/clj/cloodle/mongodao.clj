@@ -2,7 +2,7 @@
   (:require [monger.collection :as mc]
             [monger.conversion :refer [from-db-object]])
   (:use [monger.core :only [connect get-db disconnect authenticate]])
-  (:require [validateur.validation :refer :all])
+  (:require [cloodle.validations :as v])
   (:require [crypto.random :as crypto])
   (:require [ring.util.response :as ring]))
 
@@ -27,20 +27,12 @@
   "Create a uniq key to be used as an identifier for the event."
   (crypto/url-part key-size))
 
-(defn validate-event[event] 
-  (let [v (validation-set
-     (presence-of :name :message "Must have name") 
-     (presence-of :description :message "Must have description") 
-     (presence-of :options :message "Options must be defined"))]
-     (v event))) 
-
 (defn create-event[params]
   "Create a new event and return generated eventhash"
   (let [eventhash (get-event-hash)
-        errors (validate-event params)]
+        errors (v/validate-event params)]
   (if (empty? errors)
     (let []
-      (prn "no errors!")
       (mc/insert @database collection (merge {:eventhash eventhash} params))
       (ring/response eventhash))
   {:status 500 :body errors})))
