@@ -44,21 +44,9 @@
 ;             new-event2 (assoc new-event :saved "true")
 ;             new-event3 (assoc new-event2 :cloodle-code eventhash)]
 ;         new-event3))))
-                        
-(defn get-existing-event[eventhash]
-  (go 
-   (let [response (<! (http/get (str "api/event/" eventhash)))
-         status (:status response)]
-       (print (str "GOT FROM SERVER " (:body response)))
-       (let [event (:body response)
-             new-event (merge event {:new-participant { :name ""
-                                                                :selections []
-                                                                }
-                                     :saved true, 
-                                     :cloodle-code eventhash})]
-         
-         new-event))))
-;;;;;;;;;;;;                        
+
+
+;;;;;;;;;;;;
 
 
 
@@ -380,10 +368,23 @@
 
   (let [new-participant-with-id (assoc-in new-participant [:id] new-id)
         state-with-new-participant
-        (assoc-in app-state [:participants]
-            (conj (get-in app-state [:participants]) new-participant-with-id))]
 
-        (apply dissoc state-with-new-participant [:saved :new-participant])
+        (assoc-in app-state [:participants]
+            (vec (conj (get-in app-state [:participants]) new-participant-with-id)))
+
+        state-with-enough-participants
+
+        (assoc-in state-with-new-participant [:participants]
+            (vec (conj (get-in state-with-new-participant [:participants]) {:id -1 :name "dummy" :selections [{:optionId 1 :value 0} {:optionId 2 :value 0}]})))
+
+
+
+        ]
+
+
+
+
+        (apply dissoc state-with-enough-participants [:saved :new-participant])
 
     ))
 
@@ -557,38 +558,65 @@
 
 ;(print (:participants @app-state))
 
+(defn get-existing-event[eventhash app-state]
+  (go
+   (let [response (<! (http/get (str "api/event/" eventhash)))
+         status (:status response)]
+     (print (str "GOT FROM SERVER " (:body response)))
+     (let [event (:body response)
+           new-event (merge event {:new-participant { :name ""
+                                                      :selections []
+                                                      }
+                                   :saved true,
+                                   :cloodle-code eventhash})]
 
-(defn build-initial-state []
-  
+
+       (om/root main-page (reset! app-state new-event)
+                 {:target (. js/document (getElementById "my-app"))})
+
+       ))))
+
+(defn build-initial-state [app-state]
+
   (let [cloodle-code (get-cloodle-code)]
-;  (get-existing-event "ngKS_s4ovZ_Nn6oOF3cfUg") ;;fixme remove this
-       (if cloodle-code
-         (get-existing-event cloodle-code)
-         
-          {
-           :name "Movie Night"
-           :description "Let's drink beer and watch an Arnie movie"
-           :options [
-                     {:id 1 :name "Terminator 2"}
-                     {:id 2 :name "Commando"}
-                     {:id 3 :name "Conan The Barbarian"}
-                     {:id 4 :name "Junior"}]
-           :cloodle-code ""
-           :saved false}
-         )))
+
+    (if cloodle-code
+
+
+      (get-existing-event cloodle-code app-state)
+
+
+
+      (do
+        (reset! app-state           {
+                                     :name "Movie Night"
+                                     :description "Let's drink beer and watch an Arnie movie"
+                                     :options [
+                                               {:id 1 :name "Terminator 2"}
+                                               {:id 2 :name "Commando"}
+                                               {:id 3 :name "Conan The Barbarian"}
+                                               {:id 4 :name "Junior"}]
+                                     :cloodle-code ""
+                                     :saved false})
+
+        (om/root main-page app-state
+                 {:target (. js/document (getElementById "my-app"))})
+
+        )
+
+
+
+      )))
 
 (def app-state (atom nil))
 
-(reset! app-state (build-initial-state))
 
-(print @app-state)
+(build-initial-state app-state)
 
 
-(om/root main-page app-state
-       {:target (. js/document (getElementById "my-app"))})
-  
-  
-  
+
+
+
 
 
 
