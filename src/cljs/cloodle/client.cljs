@@ -492,13 +492,8 @@
                                                        (:participants cursors))]
 
 
-                                         (print "CUrsors " cursors)
-                                          cursors
 
-
-
-
-                                        ))))))
+                                          cursors))))))
 
 
 
@@ -553,65 +548,62 @@
                    )))
 
 
-
-
-
-;(print (:participants @app-state))
-
-(defn get-existing-event[eventhash app-state]
+(defn get-existing-event[eventhash output-channel]
   (go
    (let [response (<! (http/get (str "api/event/" eventhash)))
          status (:status response)]
      (print (str "GOT FROM SERVER " (:body response)))
      (let [event (:body response)
+
            new-event (merge event {:new-participant { :name ""
                                                       :selections []
                                                       }
                                    :saved true,
                                    :cloodle-code eventhash})]
 
+       (put! output-channel new-event)))))
 
-       (om/root main-page (reset! app-state new-event)
-                 {:target (. js/document (getElementById "my-app"))})
-
-       ))))
-
-(defn build-initial-state [app-state]
+(defn build-initial-state [state-destination]
+  "Builds the initial states and puts it in the given channel"
 
   (let [cloodle-code (get-cloodle-code)]
 
     (if cloodle-code
-
-
-      (get-existing-event cloodle-code app-state)
-
-
+      (do
+        (print "Existing Event")
+        (get-existing-event cloodle-code state-destination))
 
       (do
-        (reset! app-state           {
-                                     :name "Movie Night"
-                                     :description "Let's drink beer and watch an Arnie movie"
-                                     :options [
-                                               {:id 1 :name "Terminator 2"}
-                                               {:id 2 :name "Commando"}
-                                               {:id 3 :name "Conan The Barbarian"}
-                                               {:id 4 :name "Junior"}]
-                                     :cloodle-code ""
-                                     :saved false})
+        (print "New Event")
+        (let [new-event-state {
+                               :name "Movie Night"
+                               :description "Let's drink beer and watch an Arnie movie"
+                               :options [
+                                         {:id 1 :name "Terminator 2"}
+                                         {:id 2 :name "Commando"}
+                                         {:id 3 :name "Conan The Barbarian"}
+                                         {:id 4 :name "Junior"}]
+                               :cloodle-code ""
+                               :saved false}]
+          (put! state-destination new-event-state))))))
 
+
+(let [initial-state-chan (chan)
+      app-state (atom nil)]
+
+  (go
+
+   (build-initial-state initial-state-chan)
+
+   (let [state (<! initial-state-chan)]
+
+        (reset! app-state state)
         (om/root main-page app-state
-                 {:target (. js/document (getElementById "my-app"))})
-
-        )
+                 {:target (. js/document (getElementById "my-app"))}))))
 
 
 
-      )))
 
-(def app-state (atom nil))
-
-
-(build-initial-state app-state)
 
 
 
