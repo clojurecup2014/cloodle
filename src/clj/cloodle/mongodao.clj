@@ -2,6 +2,7 @@
   (:require [monger.collection :as mc]
             [monger.conversion :refer [from-db-object]])
   (:use [monger.core :only [connect get-db disconnect authenticate]])
+  (:require monger.json)
   (:require [cloodle.validations :as v])
   (:require [crypto.random :as crypto])
   (:require [ring.util.response :as ring]))
@@ -37,17 +38,13 @@
       (ring/response eventhash))
   {:status 500 :body errors})))
 
-(defn strip-mongo-id[event]
-  "Strip mongo object ids from the stuff that comes out of mongo db. It does not serialize to json"
-  (dissoc event :_id))
-
 (defn find-one-by-ehash[ehash]
   (mc/find-one-as-map @database collection {:cloodle-code ehash}))
 
 (defn get-by-eventhash[ehash]
   "Get event from database by the eventhash"
   (let [event (find-one-by-ehash ehash)]
-    (strip-mongo-id event)))
+    event))
 
 (defn update-event[event]
    (prn "updating event and validating" event)
@@ -58,7 +55,7 @@
                :else  (let [doc-id (:_id exists)
                             new-event (assoc event :_id doc-id)]
                           ;; finds and updates a document by _id because it is present
-                          (strip-mongo-id (mc/save-and-return @database collection new-event))))))
+                          (mc/save-and-return @database collection new-event)))))
 
 (defn init[]
   "Initialize mongodb connection and database!"
