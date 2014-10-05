@@ -15,8 +15,8 @@ To implement for initial usable version
     * Sliders are not linked to the state
     * Ability to answer yourself immediately
   * When anseering existing event
-    * Moving the slider creates new options/value maps rather than updating existing ones
-    * IIRC, saving didn't work if there was only one participant (which is always the case initially, unless we allow multiple answers immediately)
+    * ~~Moving the slider creates new options/value maps rather than updating existing ones~~
+    * Saving the votes doesn't work
 
 * Core features
  * Displaying the aggregate voting results for the event
