@@ -11,12 +11,14 @@ To implement for initial usable version
 ---------------------------------------
 
 * Show stoppers
-  * Having saved a new event
-    * Sliders are not linked to the state
-    * Ability to answer yourself immediately
+  * Having just saved a new event
+    * ~~Sliders are not linked to the state~~
   * When anseering existing event
     * ~~Moving the slider creates new options/value maps rather than updating existing ones~~
-    * Saving the votes doesn't work
+
+  * Saving a vote doesn't work
+    * Need to generate IDs for the participant (do this server side?, similarly move the option id generation server-side)
+    * Old selection validation will not work with the new {optionId value} structure
 
 * Core features
  * Displaying the aggregate voting results for the event
