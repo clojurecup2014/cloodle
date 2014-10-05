@@ -1,4 +1,5 @@
 (ns cloodle.mongodao
+  (:require [cloodle.util :as util])
   (:require [monger.collection :as mc]
             [monger.conversion :refer [from-db-object]])
   (:use [monger.core :only [connect get-db disconnect authenticate]])
@@ -24,17 +25,27 @@
           prod-uri
           test-uri)))
 
-(defn get-event-hash[]
+(defn get-event-hash []
   "Create a uniq key to be used as an identifier for the event."
   (crypto/url-part key-size))
 
-(defn create-event[params]
+
+(defn generate-identifiers [event-data]
+
+  (let [with-cloodle-code (merge {:cloodle-code (get-event-hash)} event-data)
+        with-event-identifiers (assoc-in
+                                with-cloodle-code [:options]
+                                (map #(assoc % :optionId (util/uuid)) (:options with-cloodle-code)))]
+
+    with-event-identifiers))
+
+(defn create-event [event-data]
   "Create a new event and return generated eventhash"
   (let [eventhash (get-event-hash)
-        errors (v/validate-event params)]
+        errors (v/validate-event event-data)]
   (if (empty? errors)
-    (let []
-      (mc/insert @database collection (merge {:cloodle-code eventhash} params))
+    (let [event-with-identifiers (generate-identifiers event-data)]
+      (mc/insert @database collection event-with-identifiers)
       (ring/response eventhash))
   {:status 500 :body errors})))
 
