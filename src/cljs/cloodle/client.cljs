@@ -209,7 +209,10 @@
 
                               (do
                                 (om/transact! form-data :cloodle-code (fn [_] cloodle-code))
-                                (om/transact! form-data :saved (fn [_] true)))
+                                (om/transact! form-data :saved (fn [_] true))
+                                (om/transact! form-data :new-participant (fn [_]
+                                                                           {:name ""
+                                                                            :selections {}})))
 
 
                               ;; TODO: Display errors? Or rather prevent sending this stuff via UI
