@@ -304,25 +304,22 @@
 
   (print "Option " (:id @option) " to val " val)
 
-  (if-let [selection (get-selection-by-id @selections (:id @option))]
+  (if-let [selection (get @selections (:id @option))]
 
     ;; UPDATE EXISTING SELECTION
     (om/transact! selections (fn [xs]
-
                                (let [id (:id @option)
                                      selection (get-selection-by-id xs id)]
 
-                                 (conj (remove #(= (:id %) id) xs) {:optionId id :value val}))))
+                                 (update-in @selections [id] (fn [_] val)))))
+
+                                 ; (conj (remove #(= (:id %) id) xs) {:optionId id :value val}))))
 
     ;; ADD NEW SELECTION
-    (om/transact! selections (fn [xs] (conj xs {:optionId (:id @option) :value val})))
-
-    ))
+    (om/transact! selections (fn [xs] (assoc xs (:id @option) val)))))
 
 
 (defcomponent slider [{:keys [option selections]} owner]
-
-
 
       (render [_]
               (dom/div #js {:className "slider col-sm-6"} nil))
@@ -345,7 +342,6 @@
 
 
   (render-state [this state]
-
           (dom/div #js {:className "row" :style #js {:margin-bottom "15px"}}
             (dom/div #js {:className "col-sm-2"} (:name (:option cursors)))
             (om/build slider cursors))
@@ -357,14 +353,14 @@
   (om/set-state! owner :participant-name (.. e -target -value)))
 
 (defn initialize-option-votes [options]
-
-
-  (map (fn [option] {:id (:id option) :name (:name option) :value 50}) options)
-
-  )
+  (map (fn [option] {:id (:id option) :name (:name option) :value 50}) options))
 
 
 (defn vote->save-payload [new-participant app-state new-id]
+
+  ;; TODO GET RID OF THE DUMMY PARTICIPANT! Was added to avoid the issue where the posted json's single element lists where
+  ;; converted to just the single element (without the enclosing list) by some middleware. Fix the middleware issue, then
+  ;; remove the dummy participant
 
   (let [new-participant-with-id (assoc-in new-participant [:id] new-id)
         state-with-new-participant
@@ -375,7 +371,7 @@
         state-with-enough-participants
 
         (assoc-in state-with-new-participant [:participants]
-            (vec (conj (get-in state-with-new-participant [:participants]) {:id -1 :name "dummy" :selections [{:optionId 1 :value 0} {:optionId 2 :value 0}]})))
+            (vec (conj (get-in state-with-new-participant [:participants]) {:id -1 :name "dummy" :selections {1 0, 2 0}})))
 
 
 
@@ -392,9 +388,7 @@
 
     (init-state [_]
               {:save-vote-chan (chan)
-               :new-participant-id (inc (max-id (:participants app-state)))
-
-               })
+               :new-participant-id (inc (max-id (:participants app-state)))})
 
 
     (will-mount [_]
@@ -548,18 +542,18 @@
                    )))
 
 
-(defn get-existing-event[eventhash output-channel]
+(defn get-existing-event[cloodle-code output-channel]
   (go
-   (let [response (<! (http/get (str "api/event/" eventhash)))
+   (let [response (<! (http/get (str "api/event/" cloodle-code)))
          status (:status response)]
      (print (str "GOT FROM SERVER " (:body response)))
      (let [event (:body response)
 
            new-event (merge event {:new-participant { :name ""
-                                                      :selections []
+                                                      :selections {}
                                                       }
-                                   :saved true,
-                                   :cloodle-code eventhash})]
+                                   :saved true
+                                   })]
 
        (put! output-channel new-event)))))
 
@@ -596,10 +590,10 @@
    (build-initial-state initial-state-chan)
 
    (let [state (<! initial-state-chan)]
-
         (reset! app-state state)
         (om/root main-page app-state
                  {:target (. js/document (getElementById "my-app"))}))))
+
 
 
 

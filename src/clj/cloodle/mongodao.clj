@@ -33,7 +33,7 @@
         errors (v/validate-event params)]
   (if (empty? errors)
     (let []
-      (mc/insert @database collection (merge {:eventhash eventhash} params))
+      (mc/insert @database collection (merge {:cloodle-code eventhash} params))
       (ring/response eventhash))
   {:status 500 :body errors})))
 
@@ -42,7 +42,7 @@
   (dissoc event :_id))
 
 (defn find-one-by-ehash[ehash]
-  (mc/find-one-as-map @database collection {:eventhash ehash}))
+  (mc/find-one-as-map @database collection {:cloodle-code ehash}))
 
 (defn get-by-eventhash[ehash]
   "Get event from database by the eventhash"
@@ -52,7 +52,7 @@
 (defn update-event[event]
    (prn "updating event and validating" event)
    (let [errors (v/validate-event-update event)
-         exists (find-one-by-ehash (:eventhash event))]
+         exists (find-one-by-ehash (:cloodle-code event))]
          (cond (not-empty errors) {:status 500 :body errors }
                (nil? exists) {:status 500 :body "event not found in database"}
                :else  (let [doc-id (:_id exists)
