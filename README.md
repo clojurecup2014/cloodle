@@ -11,21 +11,18 @@ To implement for initial usable version
 ---------------------------------------
 
 * Show stoppers
-  * Having just saved a new event
-    * ~~Sliders are not linked to the state~~
-  * When anseering existing event
-    * ~~Moving the slider creates new options/value maps rather than updating existing ones~~
-
+  * ~~Sliders are not linked to the state~~
+  * ~~Moving the slider creates new options/value maps rather than updating existing ones~~
   * Saving a vote doesn't work
     * Need to generate IDs for the participant (do this server side?, similarly move the option id generation server-side)
     * Old selection validation will not work with the new {optionId value} structure
 
 * Core features
- * Displaying the aggregate voting results for the event
+  * Displaying the aggregate voting results for the event
 
 * Misc
- * The Cloodle code could be shorter(?) and nicer. Make sure it never has characters that wouldn't work in the URL
- * Remove the MongoBase urls / keys from the repo, provide from property files or something
+  * The Cloodle code could be shorter(?) and nicer. Make sure it never has characters that wouldn't work in the URL
+  * Remove the MongoBase urls / keys from the repo, provide from property files or something
 
 * Usability / Cosmetics
   * The participant name input is unintuitive - confused with the event name input
