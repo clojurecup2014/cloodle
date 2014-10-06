@@ -15,9 +15,9 @@ To implement for initial usable version
   * ~~Moving the slider creates new options/value maps rather than updating existing ones~~
   * Saving a vote doesn't work
     * ~~Generate option ids server side~~
-    * Remove client-side option id generation
-    * Return the generated option ids (maybe the whole event map? from the server-side after saving)
-    * Need to generate IDs for the participant (do this server side?, similarly move the option id generation server-side)
+    * ~~Remove client-side option id generation~~
+    * ~~Return the generated option ids (maybe the whole event map? from the server-side after saving)~~
+    * Need to generate IDs for the participant (do this server side)
     * Old selection validation will not work with the new {optionId value} structure
 
 * Core features

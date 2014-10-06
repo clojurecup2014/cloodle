@@ -36,6 +36,7 @@
 
   (POST "/api/event/join" {params :params} ;; if params are empty, check that you have Content-Type: application/json. br, Jarkko
         (dao/update-event params))
+
   (GET "/api/event/:eventhash" [eventhash]
 ;       (prn " Getting from mongo! " eventhash)
        (ring/response (dao/get-by-eventhash eventhash)))

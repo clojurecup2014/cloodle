@@ -6,8 +6,11 @@
             [cljs.core.async :refer [put! chan <!]]
             [clojure.string :as string]
             [cljs-http.client :as http]
+
             )
-  (:use [jayq.core :only [$ css html]]))
+  (:use [jayq.core :only [$ css html]])
+
+  )
 
 
 
@@ -94,8 +97,8 @@
   (let [new-option (-> (om/get-node owner "new-option")
                        .-value)]
     (when (not (string/blank? new-option))
-      (let [next-id (inc (max-id (:options @form-data)))]
-        (om/transact! form-data :options #(conj % {:name new-option :id next-id}))))
+      (do
+        (om/transact! form-data :options #(conj % {:name new-option}))))
         (om/set-state! owner :new-option-text "")))
 
 
@@ -205,10 +208,10 @@
                          (let [response (<! (http/post "api/event" {:json-params payload}))
                                status (:status response)]
 
-                            (if-let [cloodle-code (if (= status 200) (:body response))]
+                            (if-let [saved-state (if (= status 200) (:body response))]
 
                               (do
-                                (om/transact! form-data :cloodle-code (fn [_] cloodle-code))
+                                (om/transact! form-data (fn [_] saved-state))
                                 (om/transact! form-data :saved (fn [_] true))
                                 (om/transact! form-data :new-participant (fn [_]
                                                                            {:name ""
@@ -291,9 +294,7 @@
                                                                 :onClick (fn [e] (put! (:save-event-chan state) @form-data))
                                                                 }
                                                            (dom/span #js {:className "glyphicon glyphicon-ok"})
-                                                           (dom/span nil " Create!")))))
-
-                   )))
+                                                           (dom/span nil " Create!"))))))))
 
 
 
@@ -305,21 +306,20 @@
 
 (defn handle-slider-change [val selections option owner]
 
-  (print "Option " (:id @option) " to val " val)
+  (print "Option " (:optionId @option) " to val " val)
 
   (if-let [selection (get @selections (:id @option))]
 
     ;; UPDATE EXISTING SELECTION
     (om/transact! selections (fn [xs]
-                               (let [id (:id @option)
+                               (let [id (:optionId @option)
                                      selection (get-selection-by-id xs id)]
 
                                  (update-in @selections [id] (fn [_] val)))))
 
-                                 ; (conj (remove #(= (:id %) id) xs) {:optionId id :value val}))))
 
     ;; ADD NEW SELECTION
-    (om/transact! selections (fn [xs] (assoc xs (:id @option) val)))))
+    (om/transact! selections (fn [xs] (assoc xs (:optionId @option) val)))))
 
 
 (defcomponent slider [{:keys [option selections]} owner]
@@ -576,10 +576,10 @@
                                :name "Movie Night"
                                :description "Let's drink beer and watch an Arnie movie"
                                :options [
-                                         {:id 1 :name "Terminator 2"}
-                                         {:id 2 :name "Commando"}
-                                         {:id 3 :name "Conan The Barbarian"}
-                                         {:id 4 :name "Junior"}]
+                                         {:name "Terminator 2"}
+                                         {:name "Commando"}
+                                         {:name "Conan The Barbarian"}
+                                         {:name "Junior"}]
                                :cloodle-code ""
                                :saved false}]
           (put! state-destination new-event-state))))))

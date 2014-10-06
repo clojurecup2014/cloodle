@@ -46,7 +46,7 @@
   (if (empty? errors)
     (let [event-with-identifiers (generate-identifiers event-data)]
       (mc/insert @database collection event-with-identifiers)
-      (ring/response eventhash))
+      (ring/response event-with-identifiers))
   {:status 500 :body errors})))
 
 (defn find-one-by-ehash[ehash]
