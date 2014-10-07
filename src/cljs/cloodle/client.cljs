@@ -8,9 +8,7 @@
             [cljs-http.client :as http]
 
             )
-  (:use [jayq.core :only [$ css html]])
-
-  )
+  (:use [jayq.core :only [$ css html]]))
 
 
 
@@ -361,31 +359,8 @@
 
 (defn vote->save-payload [new-participant app-state new-id]
 
-  ;; TODO GET RID OF THE DUMMY PARTICIPANT! Was added to avoid the issue where the posted json's single element lists where
-  ;; converted to just the single element (without the enclosing list) by some middleware. Fix the middleware issue, then
-  ;; remove the dummy participant
-
-  (let [new-participant-with-id (assoc-in new-participant [:id] new-id)
-        state-with-new-participant
-
-        (assoc-in app-state [:participants]
-            (vec (conj (get-in app-state [:participants]) new-participant-with-id)))
-
-        state-with-enough-participants
-
-        (assoc-in state-with-new-participant [:participants]
-            (vec (conj (get-in state-with-new-participant [:participants]) {:id -1 :name "dummy" :selections {1 0, 2 0}})))
-
-
-
-        ]
-
-
-
-
-        (apply dissoc state-with-enough-participants [:saved :new-participant])
-
-    ))
+  (let [payload {:event-id (:_id app-state) :participant new-participant}]
+        payload))
 
 (defcomponent vote-component [{:keys [app-state new-participant options]} owner]
 
@@ -405,10 +380,10 @@
 
 
 
-                        (print payload)
+                        (print "payload: " payload)
 
                         (go
-                         (let [response (<! (http/post "api/event/join" {:json-params payload}))
+                         (let [response (<! (http/post "api/event/vote" {:json-params payload}))
                                status (:status response)]
 
 

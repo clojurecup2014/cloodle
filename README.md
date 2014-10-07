@@ -17,7 +17,9 @@ To implement for initial usable version
     * ~~Generate option ids server side~~
     * ~~Remove client-side option id generation~~
     * ~~Return the generated option ids (maybe the whole event map? from the server-side after saving)~~
-    * Need to generate IDs for the participant (do this server side)
+    * Saving a vote by sending the event id and the participant name + selections, not the whole thing
+       * WIP: (mc/update-by-id .. doesn't seem to work for somereason, need to investigate.)
+
     * Old selection validation will not work with the new {optionId value} structure
 
 * Core features
@@ -26,6 +28,7 @@ To implement for initial usable version
 * Misc
   * The Cloodle code could be shorter(?) and nicer. Make sure it never has characters that wouldn't work in the URL
   * Remove the MongoBase urls / keys from the repo, provide from property files or something
+  * Replace validateur with Schema
 
 * Usability / Cosmetics
   * The participant name input is unintuitive - confused with the event name input

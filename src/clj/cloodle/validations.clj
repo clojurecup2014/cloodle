@@ -99,4 +99,8 @@
        (not-empty slen-errors) slen-errors
        :else {})))
 
+;; TODO: validate implement
+(defn validate-new-participant [participant]
+  {})
+
 

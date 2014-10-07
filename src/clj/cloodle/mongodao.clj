@@ -1,7 +1,8 @@
 (ns cloodle.mongodao
   (:require [cloodle.util :as util])
   (:require [monger.collection :as mc]
-            [monger.conversion :refer [from-db-object]])
+            [monger.conversion :refer [from-db-object]]
+            [monger.operators :refer :all])
   (:use [monger.core :only [connect get-db disconnect authenticate]])
   (:require monger.json)
   (:require [cloodle.validations :as v])
@@ -39,6 +40,10 @@
 
     with-event-identifiers))
 
+(defn with-identifier [participant]
+  (assoc participant :id (util/uuid)))
+
+
 (defn create-event [event-data]
   "Create a new event and return generated eventhash"
   (let [eventhash (get-event-hash)
@@ -48,6 +53,18 @@
       (mc/insert @database collection event-with-identifiers)
       (ring/response event-with-identifiers))
   {:status 500 :body errors})))
+
+(defn add-participant [{:keys [event-id participant]}]
+  "Add the given participant and selections to an existing event identified by event-id"
+
+  (let [validation-errors (v/validate-new-participant participant)]
+    (if (empty? validation-errors)
+      (let [participant-with-identifier (with-identifier participant)]
+        (mc/update-by-id @database collection event-id {$push {:participants participant-with-identifier}})
+        (ring/response participant-with-identifier))
+      {:status 500 :body validation-errors})))
+
+
 
 (defn find-one-by-ehash[ehash]
   (mc/find-one-as-map @database collection {:cloodle-code ehash}))
