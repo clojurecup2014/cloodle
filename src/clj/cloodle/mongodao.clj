@@ -7,7 +7,8 @@
   (:require monger.json)
   (:require [cloodle.validations :as v])
   (:require [crypto.random :as crypto])
-  (:require [ring.util.response :as ring]))
+  (:require [ring.util.response :as ring])
+  (:import org.bson.types.ObjectId))
 
 (def key-size 16)
 (def database (atom nil))
@@ -50,6 +51,7 @@
         errors (v/validate-event event-data)]
   (if (empty? errors)
     (let [event-with-identifiers (generate-identifiers event-data)]
+
       (mc/insert @database collection event-with-identifiers)
       (ring/response event-with-identifiers))
   {:status 500 :body errors})))
@@ -58,9 +60,13 @@
   "Add the given participant and selections to an existing event identified by event-id"
 
   (let [validation-errors (v/validate-new-participant participant)]
+
+    (println event-id)
+    (println participant)
+
     (if (empty? validation-errors)
       (let [participant-with-identifier (with-identifier participant)]
-        (mc/update-by-id @database collection event-id {$push {:participants participant-with-identifier}})
+        (mc/update @database collection {:_id (ObjectId. event-id)} {$push {:participants participant-with-identifier}})
         (ring/response participant-with-identifier))
       {:status 500 :body validation-errors})))
 

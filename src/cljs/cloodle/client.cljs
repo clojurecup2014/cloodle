@@ -555,6 +555,7 @@
                                          {:name "Commando"}
                                          {:name "Conan The Barbarian"}
                                          {:name "Junior"}]
+                               :participants []
                                :cloodle-code ""
                                :saved false}]
           (put! state-destination new-event-state))))))

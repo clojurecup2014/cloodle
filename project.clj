@@ -15,6 +15,7 @@
                  [crypto-random "1.2.0"]
                  [com.novemberain/validateur "2.3.1"]
                  [cheshire "5.3.1"]
+
                  ]
   :profiles {:dev {:dependencies [[midje "1.6.3"]]}
              :test-test-paths {:test-paths ["test"]}
