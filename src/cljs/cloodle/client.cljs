@@ -210,7 +210,6 @@
 
                               (do
                                 (om/transact! form-data (fn [_] saved-state))
-                                (om/transact! form-data :saved (fn [_] true))
                                 (om/transact! form-data :new-participant (fn [_]
                                                                            {:name ""
                                                                             :selections {}})))
@@ -438,21 +437,13 @@
 
 
 (defcomponent participant-component [cursors owner]
-
   (render [this]
-
-
-          (om/build vote-component cursors)
-
-
-          ))
+          (om/build vote-component cursors)))
 
 (defcomponent participant-list [cursors owner]
 
 
   (render [this]
-
-
           (dom/div nil
                    (dom/h1 nil "Participants")
                    (apply dom/div nil
@@ -462,11 +453,7 @@
                                                                                  :participant participant-cursor
                                                                                  :options (:options cursors)})
                                                        (:participants cursors))]
-
-
-
                                           cursors))))))
-
 
 
 (defcomponent state-debug [app-state owner]
@@ -474,6 +461,10 @@
   (render [this]
 
           (dom/pre nil (prn-str app-state))))
+
+
+(defn saved? [app-state]
+    (not (string/blank? (:cloodle-code app-state))))
 
 (defcomponent main-page [app-state owner]
 
@@ -483,11 +474,11 @@
                    ;; TITLE AND DESCRIPTION (FOR EXISTING EVENT)
                    (om/build title-and-description
                              (select-keys app-state [:name :description])
-                             {:state {:visible (:saved app-state)}})
+                             {:state {:visible (:saved? app-state)}})
 
 
                    ;; LIST PARTICIPANTS
-                   (if (:saved app-state)
+                   (if (saved? app-state)
 
                      (dom/div nil
                      (om/build vote-component {:app-state app-state
@@ -503,13 +494,13 @@
 
 
                    ;; NEW EVENT FORM
-                   (if (not (:saved app-state))
+                   (if (not (saved? app-state))
                      (om/build cloodle-form
                                app-state
-                               {:state {:saved (:saved app-state)}}))
+                               {:state {:saved (saved? app-state)}}))
 
                    ;; CLOODLE-CODE SHARING INFO BOX
-                   (om/build cloodle-code (:cloodle-code app-state) {:state {:saved (:saved app-state)}})
+                   (om/build cloodle-code (:cloodle-code app-state) {:state {:saved (saved? app-state)}})
 
 
 
@@ -530,7 +521,6 @@
            new-event (merge event {:new-participant { :name ""
                                                       :selections {}
                                                       }
-                                   :saved true
                                    })]
 
        (put! output-channel new-event)))))
@@ -556,8 +546,7 @@
                                          {:name "Conan The Barbarian"}
                                          {:name "Junior"}]
                                :participants []
-                               :cloodle-code ""
-                               :saved false}]
+                               :cloodle-code ""}]
           (put! state-destination new-event-state))))))
 
 
