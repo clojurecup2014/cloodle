@@ -50,10 +50,10 @@
   (let [eventhash (get-event-hash)
         errors (v/validate-event event-data)]
   (if (empty? errors)
-    (let [event-with-identifiers (generate-identifiers event-data)]
+    (let [event-with-identifiers (generate-identifiers event-data)
+          saved-event (mc/insert-and-return @database collection event-with-identifiers)]
 
-      (mc/insert @database collection event-with-identifiers)
-      (ring/response event-with-identifiers))
+      (ring/response saved-event))
   {:status 500 :body errors})))
 
 (defn add-participant [{:keys [event-id participant]}]
