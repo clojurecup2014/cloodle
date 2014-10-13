@@ -13,13 +13,8 @@ To implement for initial usable version
 * Show stoppers
   * ~~Sliders are not linked to the state~~
   * ~~Moving the slider creates new options/value maps rather than updating existing ones~~
-  * Saving a vote doesn't work
-    * ~~Generate option ids server side~~
-    * ~~Remove client-side option id generation~~
-    * ~~Return the generated option ids (maybe the whole event map? from the server-side after saving)~~
-    * After saving a new event, mongo id is not in the state -> voting fails
-    * ~~Saving a vote by sending the event id and the participant name + selections, not the whole thing~~
-    * Vote validation (Old selection validation will not work with the new {optionId value} structure)
+  * ~~Saving a vote doesn't work~~
+  * Vote validation (Old selection validation will not work with the new {optionId value} structure)
 
 
 * Core features
