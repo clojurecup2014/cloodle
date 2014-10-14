@@ -15,8 +15,8 @@ To implement for initial usable version
   * ~~Moving the slider creates new options/value maps rather than updating existing ones~~
   * ~~Saving a vote doesn't work~~
   * Saved vote is not immediately shown in the UI
-  * Existing participant components don't show the participant name
-  * Existing participant components are ugly (just identical to the new participant UI)
+  * ~Existing participant components don't show the participant name~
+  * Existing participant components are ugly
   * Vote validation (Old selection validation will not work with the new {optionId value} structure)
 
 

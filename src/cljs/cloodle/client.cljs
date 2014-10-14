@@ -3,15 +3,13 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [om-tools.core :refer-macros [defcomponent]]
+            [om-tools.dom :as ddom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
             [clojure.string :as string]
             [cljs-http.client :as http]
 
             )
   (:use [jayq.core :only [$ css html]]))
-
-
-
 
 
 (enable-console-print!)
@@ -29,30 +27,6 @@
                (second event-id-matching))]
 
       cloodle-code)))
-;;;;;;;;
-;;http://localhost:3000/cloodle.html?event=ngKS_s4ovZ_Nn6oOF3cfUg
-;;FX8eO5tHq-f2L3_yWiIY6g
-;(defn get-existing-event[eventhash]
-;  (go
-;   (let [response (<! (http/get (str "api/event/" eventhash) {}))
-;         status (:status response)]
-;       (print (str "GOT FROM SERVER " (:body response)))
-;       (let [event (:body response)
-;             new-event (assoc event :new-participant {
-;                                                      :name ""
-;                                                      :selections []
-;                                                      })
-;             new-event2 (assoc new-event :saved "true")
-;             new-event3 (assoc new-event2 :cloodle-code eventhash)]
-;         new-event3))))
-
-
-;;;;;;;;;;;;
-
-
-
-
-
 
 
 (defn display [show]
@@ -83,10 +57,7 @@
 
                                         (dom/span #js {:className "glyphicon glyphicon-trash"} nil)))
 
-                   (dom/br #js {:className "clearfix"} nil))
-
-
-  ))
+                   (dom/br #js {:className "clearfix"} nil))))
 
 (defn max-id [maps-with-ids]
   (:id (last (sort-by :id maps-with-ids))))
@@ -134,12 +105,6 @@
                      (dom/h3 nil "Share it with your friends and have them vote on the options!")))))
 
 
-
-
-
-
-
-
 (defcomponent new-option-component [form-data owner]
 
   (render-state [this state]
@@ -162,13 +127,11 @@
                                         "Add option")))))
 
 
+;; TODO NOT NEEDED
 (defn state->save-payload [state]
   "Transform the snapshot of the state to the form that the save interface accepts"
 
   (select-keys state (disj (set (keys state)) :cloodle-code)))
-
-
-
 
 
 ;; MAIN FORM COMPONENT
@@ -216,13 +179,7 @@
 
 
                               ;; TODO: Display errors? Or rather prevent sending this stuff via UI
-                              (print (str "Save failed: " (:body response))))
-
-
-
-
-
-                           ))
+                              (print (str "Save failed: " (:body response))))))
 
                         (recur))))))
 
@@ -344,9 +301,7 @@
   (render-state [this state]
           (dom/div #js {:className "row" :style #js {:margin-bottom "15px"}}
             (dom/div #js {:className "col-sm-2"} (:name (:option cursors)))
-            (om/build slider cursors))
-))
-
+            (om/build slider cursors))))
 
 
 (defn handle-participant-name-change [e owner]
@@ -378,67 +333,67 @@
                             payload (vote->save-payload new-participant @app-state (om/get-state owner :new-participant-id))]
 
 
-
-                        (print "payload: " payload)
-
                         (go
                          (let [response (<! (http/post "api/event/vote" {:json-params payload}))
-                               status (:status response)]
-
-
-                           (print response)
-
-                           ))
+                               status (:status response)]))
 
                         (recur))))))
 
 
-
   (render-state [this state]
 
-          (dom/div #js {:style #js {:border "solid black 1px"}}
+                (dom/div #js {:style #js {:border "solid black 1px"}}
 
-                   (dom/div #js {:className "row form-group"}
+                         (dom/div #js {:className "row form-group"}
 
-                            (dom/label #js {:htmlFor "participant-name"
-                                            :className "col-sm-2 control-label"}
-                                       "Name")
+                                  (dom/label #js {:htmlFor "participant-name"
+                                                  :className "col-sm-2 control-label"}
+                                             "Name")
 
-                            (dom/div #js {:className "col-sm-6"}
-                                     (dom/input #js {:id "name"
-                                                     :className "form-control"
-                                                     :type "text"
-                                                     :value (:name new-participant)
-                                                     :ref "participant-name"
-                                                     :onChange  (fn [e]
-                                                                  (om/transact! new-participant :name (fn [_] (.. e -target -value))))
-                                                     })))
-
-
-                   (apply dom/div nil
-                          (om/build-all option-slider (map
-                                                       (fn [option-cursor] {:option option-cursor
-                                                                            :selections (:selections new-participant)})
-                                                       options))
-                          )
+                                  (dom/div #js {:className "col-sm-6"}
+                                           (dom/input #js {:id "name"
+                                                           :className "form-control"
+                                                           :type "text"
+                                                           :value (:name new-participant)
+                                                           :ref "participant-name"
+                                                           :onChange  (fn [e]
+                                                                        (om/transact! new-participant :name (fn [_] (.. e -target -value))))
+                                                           })))
 
 
+                         (apply dom/div nil
+                                (om/build-all option-slider
+                                              (map
+                                               (fn [option-cursor] {:option option-cursor
+                                                                    :selections (:selections new-participant)})
+                                               options))                          )
 
-                   (dom/button #js {:type "button"
-                                             :className "btn btn-success"
-                                             :onClick (fn [e] (put! (:save-vote-chan state) @new-participant))}
-                                        "Save vote")
 
 
-                   ; (dom/pre nil (prn-str state))
-
-                   )))
+                         (dom/button #js {:type "button"
+                                          :className "btn btn-success"
+                                          :onClick (fn [e] (put! (:save-vote-chan state) @new-participant))}
+                                     "Save vote"))))
 
 
 
 (defcomponent participant-component [cursors owner]
   (render [this]
-          (om/build vote-component cursors)))
+
+          (let [{:keys [name selections]} (:participant cursors)]
+
+            (ddom/div
+             (ddom/h5 name)
+
+             (ddom/ul
+
+              (for [sel selections]
+                (ddom/li (prn-str sel))))
+
+              (ddom/pre (prn-str (:participant cursors)))))))
+
+
+
 
 (defcomponent participant-list [cursors owner]
 
@@ -459,7 +414,6 @@
 (defcomponent state-debug [app-state owner]
 
   (render [this]
-
           (dom/pre nil (prn-str app-state))))
 
 
@@ -488,10 +442,7 @@
                      (om/build participant-list {:participants (:participants app-state)
                                                  :app-state app-state
                                                  :options (:options app-state)
-                                                 }))
-
-                     )
-
+                                                 })))
 
                    ;; NEW EVENT FORM
                    (if (not (saved? app-state))
@@ -501,14 +452,7 @@
 
                    ;; CLOODLE-CODE SHARING INFO BOX
                    (om/build cloodle-code (:cloodle-code app-state) {:state {:saved (saved? app-state)}})
-
-
-
-
-                    (om/build state-debug app-state)
-
-
-                   )))
+                    (om/build state-debug app-state))))
 
 
 (defn get-existing-event[cloodle-code output-channel]
