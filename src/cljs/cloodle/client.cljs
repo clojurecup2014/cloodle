@@ -3,14 +3,13 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [om-tools.core :refer-macros [defcomponent]]
+            [om-tools.dom :as ddom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
             [clojure.string :as string]
             [cljs-http.client :as http]
+
             )
   (:use [jayq.core :only [$ css html]]))
-
-
-
 
 
 (enable-console-print!)
@@ -28,30 +27,6 @@
                (second event-id-matching))]
 
       cloodle-code)))
-;;;;;;;;
-;;http://localhost:3000/cloodle.html?event=ngKS_s4ovZ_Nn6oOF3cfUg
-;;FX8eO5tHq-f2L3_yWiIY6g
-;(defn get-existing-event[eventhash]
-;  (go
-;   (let [response (<! (http/get (str "api/event/" eventhash) {}))
-;         status (:status response)]
-;       (print (str "GOT FROM SERVER " (:body response)))
-;       (let [event (:body response)
-;             new-event (assoc event :new-participant {
-;                                                      :name ""
-;                                                      :selections []
-;                                                      })
-;             new-event2 (assoc new-event :saved "true")
-;             new-event3 (assoc new-event2 :cloodle-code eventhash)]
-;         new-event3))))
-
-
-;;;;;;;;;;;;
-
-
-
-
-
 
 
 (defn display [show]
@@ -82,10 +57,7 @@
 
                                         (dom/span #js {:className "glyphicon glyphicon-trash"} nil)))
 
-                   (dom/br #js {:className "clearfix"} nil))
-
-
-  ))
+                   (dom/br #js {:className "clearfix"} nil))))
 
 (defn max-id [maps-with-ids]
   (:id (last (sort-by :id maps-with-ids))))
@@ -94,8 +66,8 @@
   (let [new-option (-> (om/get-node owner "new-option")
                        .-value)]
     (when (not (string/blank? new-option))
-      (let [next-id (inc (max-id (:options @form-data)))]
-        (om/transact! form-data :options #(conj % {:name new-option :id next-id}))))
+      (do
+        (om/transact! form-data :options #(conj % {:name new-option}))))
         (om/set-state! owner :new-option-text "")))
 
 
@@ -133,12 +105,6 @@
                      (dom/h3 nil "Share it with your friends and have them vote on the options!")))))
 
 
-
-
-
-
-
-
 (defcomponent new-option-component [form-data owner]
 
   (render-state [this state]
@@ -161,13 +127,11 @@
                                         "Add option")))))
 
 
+;; TODO NOT NEEDED
 (defn state->save-payload [state]
   "Transform the snapshot of the state to the form that the save interface accepts"
 
   (select-keys state (disj (set (keys state)) :cloodle-code)))
-
-
-
 
 
 ;; MAIN FORM COMPONENT
@@ -205,21 +169,17 @@
                          (let [response (<! (http/post "api/event" {:json-params payload}))
                                status (:status response)]
 
-                            (if-let [cloodle-code (if (= status 200) (:body response))]
+                            (if-let [saved-state (if (= status 200) (:body response))]
 
                               (do
-                                (om/transact! form-data :cloodle-code (fn [_] cloodle-code))
-                                (om/transact! form-data :saved (fn [_] true)))
+                                (om/transact! form-data (fn [_] saved-state))
+                                (om/transact! form-data :new-participant (fn [_]
+                                                                           {:name ""
+                                                                            :selections {}})))
 
 
                               ;; TODO: Display errors? Or rather prevent sending this stuff via UI
-                              (print (str "Save failed: " (:body response))))
-
-
-
-
-
-                           ))
+                              (print (str "Save failed: " (:body response))))))
 
                         (recur))))))
 
@@ -288,9 +248,7 @@
                                                                 :onClick (fn [e] (put! (:save-event-chan state) @form-data))
                                                                 }
                                                            (dom/span #js {:className "glyphicon glyphicon-ok"})
-                                                           (dom/span nil " Create!")))))
-
-                   )))
+                                                           (dom/span nil " Create!"))))))))
 
 
 
@@ -302,27 +260,23 @@
 
 (defn handle-slider-change [val selections option owner]
 
-  (print "Option " (:id @option) " to val " val)
+  (print "Option " (:optionId @option) " to val " val)
 
-  (if-let [selection (get-selection-by-id @selections (:id @option))]
+  (if-let [selection (get @selections (:id @option))]
 
     ;; UPDATE EXISTING SELECTION
     (om/transact! selections (fn [xs]
-
-                               (let [id (:id @option)
+                               (let [id (:optionId @option)
                                      selection (get-selection-by-id xs id)]
 
-                                 (conj (remove #(= (:id %) id) xs) {:optionId id :value val}))))
+                                 (update-in @selections [id] (fn [_] val)))))
+
 
     ;; ADD NEW SELECTION
-    (om/transact! selections (fn [xs] (conj xs {:optionId (:id @option) :value val})))
-
-    ))
+    (om/transact! selections (fn [xs] (assoc xs (:optionId @option) val)))))
 
 
 (defcomponent slider [{:keys [option selections]} owner]
-
-
 
       (render [_]
               (dom/div #js {:className "slider col-sm-6"} nil))
@@ -345,56 +299,28 @@
 
 
   (render-state [this state]
-
           (dom/div #js {:className "row" :style #js {:margin-bottom "15px"}}
             (dom/div #js {:className "col-sm-2"} (:name (:option cursors)))
-            (om/build slider cursors))
-))
-
+            (om/build slider cursors))))
 
 
 (defn handle-participant-name-change [e owner]
   (om/set-state! owner :participant-name (.. e -target -value)))
 
 (defn initialize-option-votes [options]
-
-
-  (map (fn [option] {:id (:id option) :name (:name option) :value 50}) options)
-
-  )
+  (map (fn [option] {:id (:id option) :name (:name option) :value 50}) options))
 
 
 (defn vote->save-payload [new-participant app-state new-id]
 
-  (let [new-participant-with-id (assoc-in new-participant [:id] new-id)
-        state-with-new-participant
-
-        (assoc-in app-state [:participants]
-            (vec (conj (get-in app-state [:participants]) new-participant-with-id)))
-
-        state-with-enough-participants
-
-        (assoc-in state-with-new-participant [:participants]
-            (vec (conj (get-in state-with-new-participant [:participants]) {:id -1 :name "dummy" :selections [{:optionId 1 :value 0} {:optionId 2 :value 0}]})))
-
-
-
-        ]
-
-
-
-
-        (apply dissoc state-with-enough-participants [:saved :new-participant])
-
-    ))
+  (let [payload {:event-id (:_id app-state) :participant new-participant}]
+        payload))
 
 (defcomponent vote-component [{:keys [app-state new-participant options]} owner]
 
     (init-state [_]
               {:save-vote-chan (chan)
-               :new-participant-id (inc (max-id (:participants app-state)))
-
-               })
+               :new-participant-id (inc (max-id (:participants app-state)))})
 
 
     (will-mount [_]
@@ -407,80 +333,72 @@
                             payload (vote->save-payload new-participant @app-state (om/get-state owner :new-participant-id))]
 
 
-
-                        (print payload)
-
                         (go
-                         (let [response (<! (http/post "api/event/join" {:json-params payload}))
-                               status (:status response)]
-
-
-                           (print response)
-
-                           ))
+                         (let [response (<! (http/post "api/event/vote" {:json-params payload}))
+                               status (:status response)]))
 
                         (recur))))))
 
 
-
   (render-state [this state]
 
-          (dom/div #js {:style #js {:border "solid black 1px"}}
+                (dom/div #js {:style #js {:border "solid black 1px"}}
 
-                   (dom/div #js {:className "row form-group"}
+                         (dom/div #js {:className "row form-group"}
 
-                            (dom/label #js {:htmlFor "participant-name"
-                                            :className "col-sm-2 control-label"}
-                                       "Name")
+                                  (dom/label #js {:htmlFor "participant-name"
+                                                  :className "col-sm-2 control-label"}
+                                             "Name")
 
-                            (dom/div #js {:className "col-sm-6"}
-                                     (dom/input #js {:id "name"
-                                                     :className "form-control"
-                                                     :type "text"
-                                                     :value (:name new-participant)
-                                                     :ref "participant-name"
-                                                     :onChange  (fn [e]
-                                                                  (om/transact! new-participant :name (fn [_] (.. e -target -value))))
-                                                     })))
-
-
-                   (apply dom/div nil
-                          (om/build-all option-slider (map
-                                                       (fn [option-cursor] {:option option-cursor
-                                                                            :selections (:selections new-participant)})
-                                                       options))
-                          )
+                                  (dom/div #js {:className "col-sm-6"}
+                                           (dom/input #js {:id "name"
+                                                           :className "form-control"
+                                                           :type "text"
+                                                           :value (:name new-participant)
+                                                           :ref "participant-name"
+                                                           :onChange  (fn [e]
+                                                                        (om/transact! new-participant :name (fn [_] (.. e -target -value))))
+                                                           })))
 
 
+                         (apply dom/div nil
+                                (om/build-all option-slider
+                                              (map
+                                               (fn [option-cursor] {:option option-cursor
+                                                                    :selections (:selections new-participant)})
+                                               options))                          )
 
-                   (dom/button #js {:type "button"
-                                             :className "btn btn-success"
-                                             :onClick (fn [e] (put! (:save-vote-chan state) @new-participant))}
-                                        "Save vote")
 
 
-                   ; (dom/pre nil (prn-str state))
-
-                   )))
+                         (dom/button #js {:type "button"
+                                          :className "btn btn-success"
+                                          :onClick (fn [e] (put! (:save-vote-chan state) @new-participant))}
+                                     "Save vote"))))
 
 
 
 (defcomponent participant-component [cursors owner]
-
   (render [this]
 
+          (let [{:keys [name selections]} (:participant cursors)]
 
-          (om/build vote-component cursors)
+            (ddom/div
+             (ddom/h5 name)
+
+             (ddom/ul
+
+              (for [sel selections]
+                (ddom/li (prn-str sel))))
+
+              (ddom/pre (prn-str (:participant cursors)))))))
 
 
-          ))
+
 
 (defcomponent participant-list [cursors owner]
 
 
   (render [this]
-
-
           (dom/div nil
                    (dom/h1 nil "Participants")
                    (apply dom/div nil
@@ -490,18 +408,17 @@
                                                                                  :participant participant-cursor
                                                                                  :options (:options cursors)})
                                                        (:participants cursors))]
-
-
-
                                           cursors))))))
-
 
 
 (defcomponent state-debug [app-state owner]
 
   (render [this]
-
           (dom/pre nil (prn-str app-state))))
+
+
+(defn saved? [app-state]
+    (not (string/blank? (:cloodle-code app-state))))
 
 (defcomponent main-page [app-state owner]
 
@@ -511,11 +428,11 @@
                    ;; TITLE AND DESCRIPTION (FOR EXISTING EVENT)
                    (om/build title-and-description
                              (select-keys app-state [:name :description])
-                             {:state {:visible (:saved app-state)}})
+                             {:state {:visible (:saved? app-state)}})
 
 
                    ;; LIST PARTICIPANTS
-                   (if (:saved app-state)
+                   (if (saved? app-state)
 
                      (dom/div nil
                      (om/build vote-component {:app-state app-state
@@ -525,41 +442,30 @@
                      (om/build participant-list {:participants (:participants app-state)
                                                  :app-state app-state
                                                  :options (:options app-state)
-                                                 }))
-
-                     )
-
+                                                 })))
 
                    ;; NEW EVENT FORM
-                   (if (not (:saved app-state))
+                   (if (not (saved? app-state))
                      (om/build cloodle-form
                                app-state
-                               {:state {:saved (:saved app-state)}}))
+                               {:state {:saved (saved? app-state)}}))
 
                    ;; CLOODLE-CODE SHARING INFO BOX
-                   (om/build cloodle-code (:cloodle-code app-state) {:state {:saved (:saved app-state)}})
+                   (om/build cloodle-code (:cloodle-code app-state) {:state {:saved (saved? app-state)}})
+                    (om/build state-debug app-state))))
 
 
-
-
-                    (om/build state-debug app-state)
-
-
-                   )))
-
-
-(defn get-existing-event[eventhash output-channel]
+(defn get-existing-event[cloodle-code output-channel]
   (go
-   (let [response (<! (http/get (str "api/event/" eventhash)))
+   (let [response (<! (http/get (str "api/event/" cloodle-code)))
          status (:status response)]
      (print (str "GOT FROM SERVER " (:body response)))
      (let [event (:body response)
 
            new-event (merge event {:new-participant { :name ""
-                                                      :selections []
+                                                      :selections {}
                                                       }
-                                   :saved true,
-                                   :cloodle-code eventhash})]
+                                   })]
 
        (put! output-channel new-event)))))
 
@@ -579,12 +485,12 @@
                                :name "Movie Night"
                                :description "Let's drink beer and watch an Arnie movie"
                                :options [
-                                         {:id 1 :name "Terminator 2"}
-                                         {:id 2 :name "Commando"}
-                                         {:id 3 :name "Conan The Barbarian"}
-                                         {:id 4 :name "Junior"}]
-                               :cloodle-code ""
-                               :saved false}]
+                                         {:name "Terminator 2"}
+                                         {:name "Commando"}
+                                         {:name "Conan The Barbarian"}
+                                         {:name "Junior"}]
+                               :participants []
+                               :cloodle-code ""}]
           (put! state-destination new-event-state))))))
 
 
@@ -596,10 +502,10 @@
    (build-initial-state initial-state-chan)
 
    (let [state (<! initial-state-chan)]
-
         (reset! app-state state)
         (om/root main-page app-state
                  {:target (. js/document (getElementById "my-app"))}))))
+
 
 
 
