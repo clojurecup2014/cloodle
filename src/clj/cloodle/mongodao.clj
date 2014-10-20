@@ -14,12 +14,16 @@
 (def database (atom nil))
 (def collection "cloodle")
 
+
+;; Read the database connection urls from environment variables
+;; example: "mongodb://user:pass@ds063879.mongolab.com:63879/cloodle"
+
 (def test-uri
 ;  (prn "IN TEST MODE!!")
-  "mongodb://testcloodle:MikNak4498abe88@ds063779.mongolab.com:63779/test-cloodle")
+  (System/getenv "CLOODLE_TEST_MONGO_URL"))
 (def prod-uri
 ;  (prn "IN PRODUCTION MODE!!")
-  "mongodb://prodcloodle:rekVakNeg1132bok12@ds063879.mongolab.com:63879/cloodle")
+  (System/getenv "CLOODLE_PROD_MONGO_URL"))
 
 (defn get-db-uri []
   (let [mode (java.lang.System/getProperty "MODE")]
