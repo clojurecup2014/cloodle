@@ -9,6 +9,7 @@ java -DMODE=PROD -jar target/cloodle-0.1.0-SNAPSHOT-standalone.jar
 
 To implement for initial usable version
 ---------------------------------------
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/clojurecup2014/cloodle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 * Show stoppers
   * ~~Sliders are not linked to the state~~
