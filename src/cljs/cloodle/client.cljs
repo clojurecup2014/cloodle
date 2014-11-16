@@ -35,13 +35,13 @@
     #js {:display "none"}))
 
 
+;; Component that shows the name and description of a saved event
 (defcomponent title-and-description [form-data owner]
   (render-state [this {:keys [visible]}]
                 (if visible
                   (ddom/div {:className "title-and-descr"}
                            (dom/h1 nil (:name form-data))
-                           (ddom/h3 (:description form-data))
-))))
+                           (ddom/h3 (:description form-data))))))
 
 (defcomponent option-container [option-data owner]
   (render-state [this {:keys [delete-chan]}]
@@ -57,9 +57,6 @@
                                         (dom/span #js {:className "glyphicon glyphicon-trash"} nil)))
 
                    (dom/br #js {:className "clearfix"} nil))))
-
-(defn max-id [maps-with-ids]
-  (:id (last (sort-by :id maps-with-ids))))
 
 (defn add-option [form-data owner]
   (let [new-option (-> (om/get-node owner "new-option")
@@ -85,7 +82,6 @@
 
 ;; CLOODLE CODE COMPONENT
 (defcomponent cloodle-code [code owner]
-
 
   (render-state [this state]
 
@@ -310,7 +306,7 @@
   (map (fn [option] {:id (:id option) :name (:name option) :value 50}) options))
 
 
-(defn vote->save-payload [new-participant app-state new-id]
+(defn vote->save-payload [new-participant app-state]
 
   (let [payload {:event-id (:_id app-state) :participant new-participant}]
         payload))
@@ -318,9 +314,7 @@
 (defcomponent vote-component [{:keys [app-state new-participant options]} owner]
 
     (init-state [_]
-              {:save-vote-chan (chan)
-               :new-participant-id (inc (max-id (:participants app-state)))})
-
+                {:save-vote-chan (chan)})
 
     (will-mount [_]
               (let [save (om/get-state owner :save-vote-chan)]
@@ -329,7 +323,7 @@
                 ;; SAVE VOTE
                 (go (loop []
                       (let [new-participant (<! save)
-                            payload (vote->save-payload new-participant @app-state (om/get-state owner :new-participant-id))]
+                            payload (vote->save-payload new-participant @app-state)]
 
 
                         (go
