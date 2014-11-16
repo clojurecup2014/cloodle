@@ -17,3 +17,12 @@
   width: 450px;
   float: left;
 }
+
+.title-and-descr {
+    border: solid black 2px;
+    width: 500px;
+    background-color: rgb(255, 255, 234);
+    margin-bottom: 20px;
+    margin-left: 20px;
+    text-align: center;
+}

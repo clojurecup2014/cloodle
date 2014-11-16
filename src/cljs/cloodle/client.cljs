@@ -36,13 +36,12 @@
 
 
 (defcomponent title-and-description [form-data owner]
-
   (render-state [this {:keys [visible]}]
-
                 (if visible
-                  (dom/div nil
+                  (ddom/div {:className "title-and-descr"}
                            (dom/h1 nil (:name form-data))
-                           (dom/p nil (:description form-data))))))
+                           (ddom/h3 (:description form-data))
+))))
 
 (defcomponent option-container [option-data owner]
   (render-state [this {:keys [delete-chan]}]
@@ -397,7 +396,6 @@
 
 (defcomponent participant-list [cursors owner]
 
-
   (render [this]
           (dom/div nil
                    (dom/h1 nil "Participants")
@@ -418,7 +416,8 @@
 
 
 (defn saved? [app-state]
-    (not (string/blank? (:cloodle-code app-state))))
+  (print (str "Checking if saved: " (:cloodle-code app-state)))
+  (not (string/blank? (:cloodle-code app-state))))
 
 (defcomponent main-page [app-state owner]
 
@@ -428,7 +427,7 @@
                    ;; TITLE AND DESCRIPTION (FOR EXISTING EVENT)
                    (om/build title-and-description
                              (select-keys app-state [:name :description])
-                             {:state {:visible (:saved? app-state)}})
+                             {:state {:visible (saved? app-state)}})
 
 
                    ;; LIST PARTICIPANTS
