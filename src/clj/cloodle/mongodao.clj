@@ -18,12 +18,20 @@
 ;; Read the database connection urls from environment variables
 ;; example: "mongodb://user:pass@ds063879.mongolab.com:63879/cloodle"
 
+
+(defn get-uri-or-except [env-var-name]
+  (let [uri (System/getenv env-var-name)]
+    (if (not (blank? uri))
+      uri
+      (throw (Exception. (str "Set the environment variable " env-var-name " to your mongo db connection URL.")))))
+
 (def test-uri
 ;  (prn "IN TEST MODE!!")
-  (System/getenv "CLOODLE_TEST_MONGO_URL"))
+  (get-uri-or-except "CLOODLE_TEST_MONGO_URL"))
 (def prod-uri
 ;  (prn "IN PRODUCTION MODE!!")
-  (System/getenv "CLOODLE_PROD_MONGO_URL"))
+  (get-uri-or-except "CLOODLE_PROD_MONGO_URL"))
+
 
 (defn get-db-uri []
   (let [mode (java.lang.System/getProperty "MODE")]

@@ -16,7 +16,7 @@ To implement for initial usable version
   * ~~Moving the slider creates new options/value maps rather than updating existing ones~~
   * ~~Saving a vote doesn't work~~
   * Saved vote is not immediately shown in the UI
-  * ~Existing participant components don't show the participant name~
+  * ~~Existing participant components don't show the participant name~~
   * Existing participant components are ugly
   * Vote validation (Old selection validation will not work with the new {optionId value} structure)
 
@@ -26,16 +26,13 @@ To implement for initial usable version
 
 * Misc
   * The Cloodle code could be shorter(?) and nicer. Make sure it never has characters that wouldn't work in the URL
-  * Remove the MongoBase urls / keys from the repo, provide from property files or something
+  * ~~Remove the MongoBase urls / keys from the repo, provide from property files or something~~
   * Replace validateur with Schema
 
 * Usability / Cosmetics
   * The participant name input is unintuitive - confused with the event name input
   * Don't allow submitting with zero options
   * Allow only one option
-
-
-
 
 
 Future features
