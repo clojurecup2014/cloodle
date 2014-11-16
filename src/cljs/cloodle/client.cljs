@@ -80,7 +80,7 @@
     (dom/a #js {:href (str "event/" code)} code))
 
 
-;; CLOODLE CODE COMPONENT
+;; Component that shows the Cloodle-link of the saved event
 (defcomponent cloodle-code [code owner]
 
   (render-state [this state]
@@ -311,6 +311,7 @@
   (let [payload {:event-id (:_id app-state) :participant new-participant}]
         payload))
 
+;; Component for submitting a new vote to an event
 (defcomponent vote-component [{:keys [app-state new-participant options]} owner]
 
     (init-state [_]
@@ -319,13 +320,12 @@
     (will-mount [_]
               (let [save (om/get-state owner :save-vote-chan)]
 
-
-                ;; SAVE VOTE
+                ;; Saving the vote
                 (go (loop []
                       (let [new-participant (<! save)
                             payload (vote->save-payload new-participant @app-state)]
 
-
+                        ;; TODO: Assuming response contains the new participant data, show it in the UI
                         (go
                          (let [response (<! (http/post "api/event/vote" {:json-params payload}))
                                status (:status response)]))
@@ -333,41 +333,40 @@
                         (recur))))))
 
 
-  (render-state [this state]
+    (render-state [this state]
+                  
+                  (ddom/div {:className "vote-component"} 
+                   (ddom/h2 "Vote on the options")
+                   (ddom/p "Use the sliders to express your preferences.")
+                   (ddom/div {:className "row form-group"}
+                            
+                            (ddom/label {:htmlFor "participant-name"
+                                         :className "col-sm-2 control-label"}
+                                        "Who are you?")
 
-                (dom/div #js {:style #js {:border "solid black 1px"}}
-
-                         (dom/div #js {:className "row form-group"}
-
-                                  (dom/label #js {:htmlFor "participant-name"
-                                                  :className "col-sm-2 control-label"}
-                                             "Name")
-
-                                  (dom/div #js {:className "col-sm-6"}
-                                           (dom/input #js {:id "name"
-                                                           :className "form-control"
-                                                           :type "text"
-                                                           :value (:name new-participant)
-                                                           :ref "participant-name"
-                                                           :onChange  (fn [e]
-                                                                        (om/transact! new-participant :name (fn [_] (.. e -target -value))))
-                                                           })))
-
-
-                         (apply dom/div nil
-                                (om/build-all option-slider
-                                              (map
-                                               (fn [option-cursor] {:option option-cursor
-                                                                    :selections (:selections new-participant)})
-                                               options))                          )
-
-
-
-                         (dom/button #js {:type "button"
-                                          :className "btn btn-success"
-                                          :onClick (fn [e] (put! (:save-vote-chan state) @new-participant))}
-                                     "Save vote"))))
-
+                            (ddom/div {:className "col-sm-4"}
+                                      (ddom/input {:id "name"
+                                                   :className "form-control"
+                                                   :type "text"
+                                                   :value (:name new-participant)
+                                                   :ref "participant-name"
+                                                   :onChange  (fn [e]
+                                                                (om/transact! 
+                                                                 new-participant 
+                                                                 :name (fn [_] (.. e -target -value))))})))
+                   
+                   
+                   (ddom/div 
+                    (om/build-all option-slider
+                                  (map
+                                   (fn [option-cursor] {:option option-cursor
+                                                        :selections (:selections new-participant)})
+                                   options)))
+                   
+                   (ddom/button {:type "button"
+                                 :className "btn btn-success"
+                                 :onClick (fn [e] (put! (:save-vote-chan state) @new-participant))}
+                                "Save vote"))))
 
 
 (defcomponent participant-component [cursors owner]
@@ -410,7 +409,8 @@
 
 
 (defn saved? [app-state]
-  (print (str "Checking if saved: " (:cloodle-code app-state)))
+  "Tells whether the event has been saved or is still in the process of being created. 
+   Based on the presence of  :cloodle-code key in the app-state map"
   (not (string/blank? (:cloodle-code app-state))))
 
 (defcomponent main-page [app-state owner]
