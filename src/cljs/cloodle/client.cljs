@@ -325,10 +325,14 @@
                       (let [new-participant (<! save)
                             payload (vote->save-payload new-participant @app-state)]
 
-                        ;; TODO: Assuming response contains the new participant data, show it in the UI
+
                         (go
                          (let [response (<! (http/post "api/event/vote" {:json-params payload}))
-                               status (:status response)]))
+                               status (:status response)]
+
+                           (if-let [saved-participant (if (= status 200) (:body response))]
+
+                             (om/transact! app-state :participants #(conj % saved-participant)))))
 
                         (recur))))))
 
