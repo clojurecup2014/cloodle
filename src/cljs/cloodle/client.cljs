@@ -332,14 +332,17 @@
 
                            (if-let [saved-participant (if (= status 200) (:body response))]
 
-                             (om/transact! app-state :participants #(conj % saved-participant)))))
+                             (do
+                               (om/transact! app-state :participants #(conj % saved-participant))
+                               (om/transact! app-state :vote-saved-this-session (fn [_] true))))))
 
                         (recur))))))
 
 
     (render-state [this state]
                   
-                  (ddom/div {:className "vote-component"} 
+                  (ddom/div {:className "vote-component"
+                             :style (display (not (:vote-saved-this-session app-state)))}
                    (ddom/h2 "Vote on the options")
                    (ddom/p "Use the sliders to express your preferences.")
                    (ddom/div {:className "row form-group"}
@@ -454,14 +457,14 @@
 
 (defn get-existing-event[cloodle-code output-channel]
   (go
-   (let [response (<! (http/get (str "api/event/" cloodle-code)))
-         status (:status response)]
+   (let [response (<! (http/get (str "api/event/" cloodle-code)))]
      (print (str "GOT FROM SERVER " (:body response)))
      (let [event (:body response)
 
            new-event (merge event {:new-participant { :name ""
                                                       :selections {}
                                                       }
+                                   :vote-saved-this-session false
                                    })]
 
        (put! output-channel new-event)))))
@@ -487,7 +490,8 @@
                                          {:name "Conan The Barbarian"}
                                          {:name "Junior"}]
                                :participants []
-                               :cloodle-code ""}]
+                               :cloodle-code ""
+                               :vote-saved-this-session false}]
           (put! state-destination new-event-state))))))
 
 
