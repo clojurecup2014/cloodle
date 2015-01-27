@@ -1,10 +1,36 @@
-1. Run with
+Run with standalone jar
+-----------------------
+
+Create the environment variables for the mongodb. Something like this:
+```
+export CLOODLE_TEST_MONGO_URL="mongodb://user:password@ds12345.mongolab.com:12345/cloodle-test"
+export CLOODLE_PROD_MONGO_URL="mongodb://user:password@ds12345.mongolab.com:12345/cloodle-prod"
+```
 
 In test mode
+```
 java -jar target/cloodle-0.1.0-SNAPSHOT-standalone.jar
+```
 
 In production mode
+```
 java -DMODE=PROD -jar target/cloodle-0.1.0-SNAPSHOT-standalone.jar
+```
+
+To run with Docker
+------------------
+
+Create the container:
+```
+docker build -t cloodle  .
+```
+
+Start the container:
+```
+docker run -e CLOODLE_TEST_MONGO_URL="mongodb://user:password@ds12345.mongolab.com:12345/cloodle-docker"  -p 8081:80 cloodle
+```
+
+The Docker file was taken from here: [Docker hub](https://registry.hub.docker.com/_/clojure/)
 
 
 To implement for initial usable version
